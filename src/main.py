@@ -1,3 +1,5 @@
+# import all the modules
+
 import GUI
 import actionHandler
 
@@ -22,26 +24,63 @@ except ImportError:
             print("Pygame installed")
             import pygame
 
+# ---------------------------------------------------------------------------------------------------- #    
+
 # print pygame version
 print(pygame.version.ver)
 
-pygame.init() # initialize pygame
+# class definitions
+class Path(pygame.sprite.Sprite):
+    def __init__(self, screen, color, points, width):
+        # calls constructor of parent class
+        pygame.sprite.Sprite.__init__(self)
 
-pygame.display.set_caption("Python TDS") # set the window title
-screen = pygame.display.set_mode((1200, 800)) # create a window 
+        # draws a polygon based on the points given on the screen
+        pygame.draw.polygon(screen, color, points, width)
 
-GUI.main(screen) # run the main function in GUI.py
-actionHandler.main()
+# pygame Sprite group definitions
+# all obejcts which are collidable should be added to this group
+groupColliders = pygame.sprite.Group()
 
-# main loop 
-while True:
-    for event in pygame.event.get():
+def main():
 
-        #print(event) # print all events
+    pygame.init() # initialize pygame
 
-        if event.type == pygame.QUIT: # if the user clicks the close button, exit
-            exit()
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            print("Mouse button pressed")
+    pygame.display.set_caption("Python TDS") # set the window title
+    screen = pygame.display.set_mode((1200, 800)) # create a window 
 
-    pygame.display.update() # update the screen
+    GUI.main(screen) # run the main function in GUI.py
+    createMapPath(screen)
+    mainPath = actionHandler.main()
+
+    # main loop 
+    while True:
+
+        if groupColliders.collide(pygame.mouse.get_pos()):
+            print("Mouse is on path")
+
+        for event in pygame.event.get():
+
+            print(event) # print all events
+
+            if event.type == pygame.QUIT: # if the user clicks the close button, exit
+                exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                print("Mouse button pressed")
+
+        pygame.display.update() # update the screen
+
+def createMapPath(screen):
+
+    # defines path corners
+    points = [(0, 380), (320, 380), (320, 160), (640, 160), (640, 630), (360 , 630), (360, 700), (930, 700), (930, 520), (700, 520), (700, 290), (960, 290), (960, 60), (700, 60), (700, 0), (1300, 0), (1030, 0), (1030, 350), (760, 350), (760, 460), (1000, 460), (1000, 760), (290, 760), (290, 560), (560, 560), (560, 220), (390, 220), (390, 440), (0, 440)]                                                                                            
+
+    #create new Path object
+    mainPath = Path(screen, (255, 0, 0), points, 2)
+
+    mainPath.add(groupColliders)
+
+    return mainPath
+
+
+main()

@@ -17,3 +17,4 @@ def main(screen):
     img = pygame.transform.scale(img, (1200, 800))
 
     screen.blit(img, (0, 0))
+
