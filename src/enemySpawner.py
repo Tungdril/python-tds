@@ -25,6 +25,9 @@ def read(currentWave):
 
 def main(currentWave, screen):
 
+    spawnedEnemies = []
+
+    #https://stackoverflow.com/questions/65511222/how-do-i-spawn-multiple-enemies-in-pygame
     #https://stackoverflow.com/questions/64530620/how-to-spawn-multiple-enemies-in-pygame
 
     # TODO implement this correctly
@@ -36,11 +39,13 @@ def main(currentWave, screen):
 
     print(toBeSpawned[0][1])
 
-    position = (100, 100)
-
     for j in range(0, i):
-        newEnemy = game.Enemy(screen, position, toBeSpawned[0][1])
-        print(j+1, toBeSpawned[0][1], "spawned") 
+        pos = (100+(j*50), 100)
 
-    
+        listEnemy = game.Enemy(screen, pos, toBeSpawned[0][1])
+        
+        game.enemyList.append(listEnemy)
+
+
+    #print("EnemySpawner:", spawnedEnemies)
 

@@ -4,7 +4,6 @@
 # import all the modules
 
 import GUI
-import actionHandler
 import enemySpawner
 
 try:
@@ -56,7 +55,6 @@ class Enemy(pygame.sprite.Sprite):
         self.determineType()
 
     def spawnLightEnemy(self):
-
         self.health = 100
         self.isArmored = False
         self.speed = 1
@@ -67,8 +65,7 @@ class Enemy(pygame.sprite.Sprite):
 
         print("Light enemy spawned")
 
-    def spawnHeavyEnemy(self):
-            
+    def spawnHeavyEnemy(self):          
         self.health = 200
         self.isArmored = True
         self.speed = 0.5
@@ -79,8 +76,7 @@ class Enemy(pygame.sprite.Sprite):
 
         print("Heavy enemy spawned")
 
-    def spawnFastEnemy(self):
-            
+    def spawnFastEnemy(self):  
         self.health = 100
         self.isArmored = False
         self.speed = 2
@@ -92,20 +88,17 @@ class Enemy(pygame.sprite.Sprite):
         print("Fast enemy spawned")
 
     def spawnBossEnemy(self):
-
         self.health = 500
         self.isArmored = True
         self.speed = 1
         self.damage = 2
         self.color = (255, 255, 0)
 
-
         pygame.draw.circle(self.screen, self.color, self.position, 10)
 
         print("Boss enemy spawned")
 
     def determineType(self):
-
         # determines which enemy to spawn based on the type given
         if self.type == "light":
             self.spawnLightEnemy()
@@ -118,7 +111,7 @@ class Enemy(pygame.sprite.Sprite):
         
         # after spawning the enemy, add it to the groupEnemies group
         groupEnemies.add(self)
-        print(len(groupEnemies.sprites()))
+        print("Current enemies:", len(groupEnemies.sprites()))
 
     def draw(self):
         for enemy in groupEnemies:
@@ -126,8 +119,9 @@ class Enemy(pygame.sprite.Sprite):
 
     def killEnemy(self):
         self.kill()
-        self.remove(groupEnemies)
-        
+        #self.remove(groupEnemies)
+
+pygame.init() # initialize pygame
 
 # pygame Sprite group definitions
 # all obejcts which are collidable should be added to this group
@@ -135,25 +129,26 @@ groupColliders = pygame.sprite.Group()
 
 groupEnemies = pygame.sprite.Group()
 
+enemyList = []
+
 def main():
 
     # deactivates console by default
     consoleActive = True
 
-    pygame.init() # initialize pygame
-
     pygame.display.set_caption("Python TDS") # set the window title
     screen = pygame.display.set_mode((1200, 800)) # create a window 
     
     #TODO determine current wave, pass it to the spawnEnemy function
-    enemySpawner.main(1, screen)
-    
-    mainPath = actionHandler.main()
+    #enemySpawner.main(1, screen)
 
-    testEnemy = Enemy(screen, (100, 100), "light")
-    testEnemy2 = Enemy(screen, (200, 100), "heavy")
+    spawnEnemy(screen)
 
-    
+    #for i in range(0, 10):
+#
+    #    pos = (100+(i*50), 100)
+#
+    #    Enemy(screen, pos, "light")
 
     # main loop 
     while True:
@@ -163,8 +158,6 @@ def main():
          
         # draw the path
         createMapPath(screen)
-
-        
 
         for event in pygame.event.get():
 
@@ -186,9 +179,7 @@ def main():
                     consoleActive = False
                     print("Console deactivated, press C to show")
                 elif event.key == pygame.K_k:
-                    print(len(groupEnemies))
-                    testEnemy2.killEnemy()
-                    print(len(groupEnemies))
+                    print(enemyList)
 
             # print all events if flag is set
             if consoleActive:
@@ -212,6 +203,21 @@ def createMapPath(screen):
     mainPath.add(groupColliders)
 
     return mainPath
+
+def spawnEnemy(screen):
+
+    enemySpawner.main(1, screen)
+
+    #for i in range(0, 10):
+    #    position = (100+(i*50), 100)
+    #    type = "light"
+    #    # creates a new enemy object
+    #    enemy = Enemy(screen, position, type)
+#
+    #    # adds the enemy to the enemyList
+    #    enemyList.append(enemy)
+#
+    #return
 
 
 if __name__ == "__main__":
