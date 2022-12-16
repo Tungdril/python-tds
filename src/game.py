@@ -4,7 +4,8 @@
 # import all the modules
 
 import GUI
-import enemySpawner
+import readWaves
+import os
 
 try:
     import pygame # check if pygame is installed, import if it is
@@ -50,51 +51,74 @@ class Enemy(pygame.sprite.Sprite):
         self.screen = screen
         self.position = position
         self.type = type
+        self.imgPath = os.getcwd() + "/assets/" + type + ".png"
 
         # determines which enemy to spawn based on the type given
         self.determineType()
 
     def spawnLightEnemy(self):
+        # loads the image, scales it to 50x50
+        img = pygame.image.load(self.imgPath).convert()
+        img = pygame.transform.scale(img, (50, 50))
+
         self.health = 100
         self.isArmored = False
         self.speed = 1
         self.damage = 1
         self.color = (255, 0, 0)
 
-        pygame.draw.circle(self.screen, self.color, self.position, 10)
+        self.image = img
+        
+        # draws a rectangle over the image, used for collision detection
+        self.rect = self.image.get_rect(topleft=self.position)
 
         print("Light enemy spawned")
 
-    def spawnHeavyEnemy(self):          
+    def spawnHeavyEnemy(self):  
+        img = pygame.image.load(self.imgPath).convert()
+        img = pygame.transform.scale(img, (50, 50))
+
         self.health = 200
         self.isArmored = True
         self.speed = 0.5
         self.damage = 1
         self.color = (0, 0, 255)
 
-        pygame.draw.circle(self.screen, self.color, self.position, 10)
+        self.image = img
+
+        self.rect = self.image.get_rect(topleft=self.position)
 
         print("Heavy enemy spawned")
 
     def spawnFastEnemy(self):  
+        img = pygame.image.load(self.imgPath).convert()
+        img = pygame.transform.scale(img, (50, 50))
+
         self.health = 100
         self.isArmored = False
         self.speed = 2
         self.damage = 1
         self.color = (0, 255, 0)
 
-        pygame.draw.circle(self.screen, self.color, self.position, 10)
+        self.image = img
+
+        self.rect = self.image.get_rect(topleft=self.position)
 
         print("Fast enemy spawned")
 
     def spawnBossEnemy(self):
+        img = pygame.image.load(self.imgPath).convert()
+        img = pygame.transform.scale(img, (50, 50))
+
         self.health = 500
         self.isArmored = True
         self.speed = 1
         self.damage = 2
         self.color = (255, 255, 0)
 
-        pygame.draw.circle(self.screen, self.color, self.position, 10)
+        self.image = img
+
+        self.rect = self.image.get_rect(topleft=self.position)
 
         print("Boss enemy spawned")
 
@@ -114,22 +138,24 @@ class Enemy(pygame.sprite.Sprite):
         print("Current enemies:", len(groupEnemies.sprites()))
 
     def draw(self):
-        for enemy in groupEnemies:
-            pygame.draw.circle(self.screen, self.color, self.position, 10)
+        # draws the enemy continuously on screen
+        groupEnemies.draw(self.screen)
+
+        #for enemy in groupEnemies:
+            #self.screen.blit(self.image, self.position)
 
     def killEnemy(self):
+        # removes the enemy from all groups, preventing it from being drawn
         self.kill()
-        #self.remove(groupEnemies)
 
-pygame.init() # initialize pygame
+# initialize pygame
+pygame.init() 
 
 # pygame Sprite group definitions
 # all obejcts which are collidable should be added to this group
 groupColliders = pygame.sprite.Group()
 
 groupEnemies = pygame.sprite.Group()
-
-enemyList = []
 
 def main():
 
@@ -166,6 +192,10 @@ def main():
                 exit()
             # test if mouse is pressed
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                for enemy in groupEnemies:
+                    if enemy.rect.collidepoint(event.pos):
+                        enemy.killEnemy()
+
                 print("Mouse button pressed")
             
             # check if a key has been pressed
@@ -179,7 +209,7 @@ def main():
                     consoleActive = False
                     print("Console deactivated, press C to show")
                 elif event.key == pygame.K_k:
-                    print(enemyList)
+                    print(groupEnemies.sprites())
 
             # print all events if flag is set
             if consoleActive:
@@ -206,19 +236,36 @@ def createMapPath(screen):
 
 def spawnEnemy(screen):
 
-    enemySpawner.main(1, screen)
+    # pass the current wave to the readWaves function, returns a list of enemies to be spawned
+    toBeSpawned = readWaves.read(1)
 
-    #for i in range(0, 10):
-    #    position = (100+(i*50), 100)
-    #    type = "light"
-    #    # creates a new enemy object
-    #    enemy = Enemy(screen, position, type)
-#
-    #    # adds the enemy to the enemyList
-    #    enemyList.append(enemy)
-#
-    #return
+   #[0]: amountLight, [1]: typeLight, [2]: amountHeavy, [3]: typeHeavy, [4]: amountFast, [5]: typeFast, [6]: amountBoss, [7]: typeBoss
+    amountLight = int(toBeSpawned[0][0])
+    amountHeavy = int(toBeSpawned[0][2])
+    amountFast = int(toBeSpawned[0][4])
+    amountBoss = int(toBeSpawned[0][6])
 
+    typeLight = toBeSpawned[0][1]
+    typeHeavy = toBeSpawned[0][3]
+    typeFast = toBeSpawned[0][5]
+    typeBoss = toBeSpawned[0][7]
+
+    #iterate through the list of enemies to be spawned, spawns each enemy
+    for i in range(0, amountLight):
+        pos = (100+(i*50), 100)
+        Enemy(screen, pos, typeLight)
+        
+    for i in range(0, amountHeavy):
+        pos = (100+(i*50), 200)
+        Enemy(screen, pos, typeHeavy)
+
+    for i in range(0, amountFast):
+        pos = (100+(i*50), 300)
+        Enemy(screen, pos, typeFast)
+
+    for i in range(0, amountBoss):
+        pos = (100+(i*50), 400)
+        Enemy(screen, pos, typeBoss)
 
 if __name__ == "__main__":
     main()
