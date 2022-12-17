@@ -58,13 +58,17 @@ class Enemy(pygame.sprite.Sprite):
         img = pygame.transform.scale(img, (50, 50))
         self.image = img
 
+        # sets waypoints to follow
+        self.waypoints = [(-50, 390), (330, 390), (330, 170), (580, 170), (580, 580), (310, 580), (310, 710), (940, 710), (940, 470), (710, 460), (710, 300), (970, 290), (970, 5), (700, 5), (700,-50)]
+        self.waypointsIndex = 0
+
         # determines which enemy to spawn based on the type given
         self.determineType()
 
     def spawnLightEnemy(self):
         self.health = 100
         self.isArmored = False
-        self.speed = 1
+        self.speed = 5
         self.damage = 1
         self.color = (255, 0, 0)
       
@@ -76,7 +80,7 @@ class Enemy(pygame.sprite.Sprite):
     def spawnHeavyEnemy(self):  
         self.health = 200
         self.isArmored = True
-        self.speed = 0.5
+        self.speed = 5
         self.damage = 1
         self.color = (0, 0, 255)
 
@@ -87,7 +91,7 @@ class Enemy(pygame.sprite.Sprite):
     def spawnFastEnemy(self):  
         self.health = 100
         self.isArmored = False
-        self.speed = 2
+        self.speed = 5
         self.damage = 1
         self.color = (0, 255, 0)
 
@@ -98,7 +102,7 @@ class Enemy(pygame.sprite.Sprite):
     def spawnBossEnemy(self):
         self.health = 500
         self.isArmored = True
-        self.speed = 1
+        self.speed = 5
         self.damage = 2
         self.color = (255, 255, 0)
 
@@ -129,10 +133,41 @@ class Enemy(pygame.sprite.Sprite):
     def killEnemy(self):
         # removes the enemy from all groups, preventing it from being drawn
         self.kill()
-        print(self.type, " killed")
+        print(self.type, "killed")
+
+    def move(self):
+        # moves the enemy along a predefined path
+        # if own position on x-axis is less than target position, increment x-axis by speed
+        if self.rect.x < self.waypoints[self.waypointsIndex][0]:
+            self.rect.x += self.speed
+        # if own position on x-axis is greater than target position, decrement x-axis by speed
+        elif self.rect.x > self.waypoints[self.waypointsIndex][0]:
+            self.rect.x -= self.speed
+        # if own position on y-axis is less than target position, increment y-axis by speed
+        if self.rect.y < self.waypoints[self.waypointsIndex][1]:
+            self.rect.y += self.speed
+        # if own position on y-axis is greater than target position, decrement y-axis by speed
+        elif self.rect.y > self.waypoints[self.waypointsIndex][1]:
+            self.rect.y -= self.speed
+
+        # if own position is equal to target position, increment waypoint index
+        if self.rect.x == self.waypoints[self.waypointsIndex][0] and self.rect.y == self.waypoints[self.waypointsIndex][1]:
+            # if waypoint index is less than the length of the waypoints list, increment waypoint index
+            if self.waypointsIndex < len(self.waypoints) - 1:
+                self.waypointsIndex += 1
+                print(self.type, "reached waypoint", self.waypointsIndex -1, "moving to waypoint", self.waypointsIndex)
+            # if waypoint index is equal to the length of the waypoints list, reset waypoint index to 0
+            else:
+                self.waypointsIndex = 0
+                self.killEnemy()
+                print(self.type, "reached final waypoint, commencing purge")
+            
 
 # initialize pygame
-pygame.init() 
+pygame.init()
+
+# set a clock, used for framerate
+clock = pygame.time.Clock()
 
 # pygame Sprite group definitions
 # all obejcts which are collidable should be added to this group
@@ -165,6 +200,9 @@ def main():
 
     # main loop 
     while True:
+
+        # set framerate
+        clock.tick(30)
 
         # run the main function in GUI.py
         GUI.main(screen)
@@ -200,11 +238,12 @@ def main():
             if consoleActive:
                 print(event)
 
-        # draw all enemies continuously
+        # draw, move all enemies continuously
         for enemy in groupEnemies:
             enemy.draw()
+            enemy.move()
             
-         # update the screen continuously    
+        # update the screen continuously    
         pygame.display.update()
 
 def createMapPath(screen):
