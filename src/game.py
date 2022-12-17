@@ -51,74 +51,58 @@ class Enemy(pygame.sprite.Sprite):
         self.screen = screen
         self.position = position
         self.type = type
+
+        # loads the image, scales it to 50x50, makes alpha channel transparent
         self.imgPath = os.getcwd() + "/assets/" + type + ".png"
+        img = pygame.image.load(self.imgPath).convert_alpha()
+        img = pygame.transform.scale(img, (50, 50))
+        self.image = img
 
         # determines which enemy to spawn based on the type given
         self.determineType()
 
     def spawnLightEnemy(self):
-        # loads the image, scales it to 50x50
-        img = pygame.image.load(self.imgPath).convert()
-        img = pygame.transform.scale(img, (50, 50))
-
         self.health = 100
         self.isArmored = False
         self.speed = 1
         self.damage = 1
         self.color = (255, 0, 0)
-
-        self.image = img
-        
+      
         # draws a rectangle over the image, used for collision detection
-        self.rect = self.image.get_rect(topleft=self.position)
+        self.rect = self.image.get_rect(center=self.position)
 
         print("Light enemy spawned")
 
     def spawnHeavyEnemy(self):  
-        img = pygame.image.load(self.imgPath).convert()
-        img = pygame.transform.scale(img, (50, 50))
-
         self.health = 200
         self.isArmored = True
         self.speed = 0.5
         self.damage = 1
         self.color = (0, 0, 255)
 
-        self.image = img
-
-        self.rect = self.image.get_rect(topleft=self.position)
+        self.rect = self.image.get_rect(center=self.position)
 
         print("Heavy enemy spawned")
 
     def spawnFastEnemy(self):  
-        img = pygame.image.load(self.imgPath).convert()
-        img = pygame.transform.scale(img, (50, 50))
-
         self.health = 100
         self.isArmored = False
         self.speed = 2
         self.damage = 1
         self.color = (0, 255, 0)
 
-        self.image = img
-
-        self.rect = self.image.get_rect(topleft=self.position)
+        self.rect = self.image.get_rect(center=self.position)
 
         print("Fast enemy spawned")
 
     def spawnBossEnemy(self):
-        img = pygame.image.load(self.imgPath).convert()
-        img = pygame.transform.scale(img, (50, 50))
-
         self.health = 500
         self.isArmored = True
         self.speed = 1
         self.damage = 2
         self.color = (255, 255, 0)
 
-        self.image = img
-
-        self.rect = self.image.get_rect(topleft=self.position)
+        self.rect = self.image.get_rect(center=self.position)
 
         print("Boss enemy spawned")
 
@@ -135,18 +119,17 @@ class Enemy(pygame.sprite.Sprite):
         
         # after spawning the enemy, add it to the groupEnemies group
         groupEnemies.add(self)
+        groupSprites.add(self)
         print("Current enemies:", len(groupEnemies.sprites()))
 
     def draw(self):
         # draws the enemy continuously on screen
         groupEnemies.draw(self.screen)
 
-        #for enemy in groupEnemies:
-            #self.screen.blit(self.image, self.position)
-
     def killEnemy(self):
         # removes the enemy from all groups, preventing it from being drawn
         self.kill()
+        print(self.type, " killed")
 
 # initialize pygame
 pygame.init() 
@@ -155,7 +138,11 @@ pygame.init()
 # all obejcts which are collidable should be added to this group
 groupColliders = pygame.sprite.Group()
 
+# all enemies should be added to this group
 groupEnemies = pygame.sprite.Group()
+
+# all Sprites should be added to this group
+groupSprites = pygame.sprite.Group()
 
 def main():
 
@@ -190,13 +177,11 @@ def main():
             # exit if the user clicks the close button
             if event.type == pygame.QUIT: # if the user clicks the close button, exit
                 exit()
-            # test if mouse is pressed
+            # DEEBUG: kills enemy if it is clicked 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 for enemy in groupEnemies:
                     if enemy.rect.collidepoint(event.pos):
                         enemy.killEnemy()
-
-                print("Mouse button pressed")
             
             # check if a key has been pressed
             if event.type == pygame.KEYDOWN:
@@ -238,17 +223,18 @@ def spawnEnemy(screen):
 
     # pass the current wave to the readWaves function, returns a list of enemies to be spawned
     toBeSpawned = readWaves.read(1)
+    print(toBeSpawned)
 
    #[0]: amountLight, [1]: typeLight, [2]: amountHeavy, [3]: typeHeavy, [4]: amountFast, [5]: typeFast, [6]: amountBoss, [7]: typeBoss
-    amountLight = int(toBeSpawned[0][0])
-    amountHeavy = int(toBeSpawned[0][2])
-    amountFast = int(toBeSpawned[0][4])
-    amountBoss = int(toBeSpawned[0][6])
+    amountLight = int(toBeSpawned[0])
+    amountHeavy = int(toBeSpawned[2])
+    amountFast = int(toBeSpawned[4])
+    amountBoss = int(toBeSpawned[6])
 
-    typeLight = toBeSpawned[0][1]
-    typeHeavy = toBeSpawned[0][3]
-    typeFast = toBeSpawned[0][5]
-    typeBoss = toBeSpawned[0][7]
+    typeLight = toBeSpawned[1]
+    typeHeavy = toBeSpawned[3]
+    typeFast = toBeSpawned[5]
+    typeBoss = toBeSpawned[7]
 
     #iterate through the list of enemies to be spawned, spawns each enemy
     for i in range(0, amountLight):

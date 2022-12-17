@@ -15,9 +15,10 @@ def read(currentWave):
     # split the line into a list of strings, append it to the toBeSpawned list
     toBeSpawned.append(lineContents.split(";"))
 
-    #print(toBeSpawned)
-
     # close the file
     file.close()
 
-    return toBeSpawned
+    # flatten the list, I'm not sure why it's even nested
+    flatList = sum(toBeSpawned, [])
+
+    return flatList
