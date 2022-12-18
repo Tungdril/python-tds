@@ -301,7 +301,7 @@ def main():
             # exit if the user clicks the close button
             if event.type == pygame.QUIT: # if the user clicks the close button, exit
                 exit()
-            # DEEBUG: kills enemy if it is clicked 1: LMB, 2: MMB, 3: RMB; 4: ScrUP, 5: ScrDOWN
+            # DEEBUG: kills enemy/tower if it is clicked 1: LMB, 2: MMB, 3: RMB; 4: ScrUP, 5: ScrDOWN
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # if left mouse button is clicked
                 if event.button == 1:
@@ -310,6 +310,7 @@ def main():
                             enemy.killEnemy()
                     for tower in groupTowers:
                         if tower.rect.collidepoint(event.pos):
+                            #set buildmode to false, so the tower stays in place
                             tower.buildmode = False
                 # if right mouse button is clicked
                 elif event.button == 3:
@@ -407,3 +408,55 @@ def buildTower(screen):
 
 if __name__ == "__main__":
     main()
+
+#   TOWERS:
+#       Tower Selection Menu
+#       Towers cost money
+#       Projectiles
+#       Tower Upgrades
+#       Tower Range
+#       Towers can't intersect with each other and path
+#       Change color in buildmode/intersection   
+#       Sell towers
+#
+#   GUI/GAMEPLAY:
+#       Base Health 
+#       Wave System
+#       Money System
+#       Game over Screen
+#       Main menu
+#       Pause between waves/start wave button
+#
+#   TBD:
+#   Hard to implement damage system:
+#       Barracks or different tower? (Minefield)
+#       Flamer or different tower? (Cannon)
+#
+#   SOUND:
+#       Tower shooting
+#       Enemy dying
+#       Enemy spawning
+#       Tower building
+#       Tower upgrading
+#       Tower selling
+#       Game over
+#       Background music
+#       Wave start
+#       Wave end
+#
+#   PARTICLES:
+#       Tower shooting
+#       Enemy dying
+#       Enemy spawning
+#       Tower building
+#       Tower upgrading
+#       Tower selling
+#       Projectile hitting enemy
+#
+#   GRAPHICS:
+#       Map
+#       Towers including different upgrades
+#       Enemies 
+#       Projectiles
+#       GUI
+#       Icons: Money, Health, Wave, Tower, Sell, Upgrade, Start Wave, Window favicon
