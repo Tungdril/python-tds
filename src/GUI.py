@@ -4,7 +4,7 @@ import os
 path = (os.getcwd())
 
 def main(screen):
-    img = pygame.image.load(path +"/assets/mapPlaceholder.png")
+    img = pygame.image.load(path +"/assets/map.png")
     img.convert()
 
     img = pygame.transform.scale(img, (1200, 800))

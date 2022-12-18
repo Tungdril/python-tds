@@ -70,7 +70,6 @@ class Enemy(pygame.sprite.Sprite):
         self.isArmored = False
         self.speed = 5
         self.damage = 1
-        self.color = (255, 0, 0)
       
         # draws a rectangle over the image, used for collision detection
         self.rect = self.image.get_rect(center=self.position)
@@ -82,7 +81,6 @@ class Enemy(pygame.sprite.Sprite):
         self.isArmored = True
         self.speed = 5
         self.damage = 1
-        self.color = (0, 0, 255)
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -93,7 +91,6 @@ class Enemy(pygame.sprite.Sprite):
         self.isArmored = False
         self.speed = 5
         self.damage = 1
-        self.color = (0, 255, 0)
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -104,7 +101,6 @@ class Enemy(pygame.sprite.Sprite):
         self.isArmored = True
         self.speed = 5
         self.damage = 2
-        self.color = (255, 255, 0)
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -133,7 +129,7 @@ class Enemy(pygame.sprite.Sprite):
     def killEnemy(self):
         # removes the enemy from all groups, preventing it from being drawn
         self.kill()
-        print(self.type, "killed")
+        print("Enemy", self.type, "killed")
 
     def move(self):
         # moves the enemy along a predefined path
@@ -161,7 +157,123 @@ class Enemy(pygame.sprite.Sprite):
                 self.waypointsIndex = 0
                 self.killEnemy()
                 print(self.type, "reached final waypoint, commencing purge")
-            
+
+class Tower(pygame.sprite.Sprite):
+    def __init__(self, screen, position, type, isBuildmode):
+        # calls constructor of parent class
+        pygame.sprite.Sprite.__init__(self)
+
+        print("constructor called")
+
+        # initializes screen, position and type
+        self.screen = screen
+        self.position = position
+        self.type = type
+
+        # loads the image, scales it to 50x50, makes alpha channel transparent
+        self.imgPath = os.getcwd() + "/assets/" + type + ".png"
+        img = pygame.image.load(self.imgPath).convert_alpha()
+        img = pygame.transform.scale(img, (100, 100))
+        self.image = img
+
+        if isBuildmode:
+            self.buildMode()
+        else:
+            # determines which tower to spawn based on the type given
+            self.determineType()
+
+    def spawnMgTower(self):
+        self.damage = 1
+        self.range = 100
+        self.fireRate = 10
+
+        self.rect = self.image.get_rect(center=self.position)
+
+        print("MG tower spawned")
+    
+    def spawnSniperTower(self):
+        self.damage = 2
+        self.range = 200
+        self.fireRate = 2
+
+        self.rect = self.image.get_rect(center=self.position)
+
+        print("Sniper tower spawned")
+
+    def spawnFlamerTower(self):
+        self.damage = 0.5
+        self.range = 50
+        self.fireRate = 10
+
+        self.rect = self.image.get_rect(center=self.position)
+
+
+        print("Flamer tower spawned")
+
+    #TBD
+    #def spawnBarracksTower(self):
+    #    self.damage = 1
+    #    self.range = 100
+    #    self.color = (255, 255, 0)
+    #    self.spawnRate = 1
+    #    print("Barracks tower spawned")
+
+    #TBD
+    #def spawnBankTower(self):
+    
+    def determineType(self):    
+        if self.type == "mg":
+            print("1")
+            self.spawnMgTower()
+        elif self.type == "sniper":
+            print("2")
+            self.spawnSniperTower()
+        elif self.type == "flamer":
+            print("3")
+            self.spawnFlamerTower()
+        #elif self.type == "barracks":
+        #    print("4")
+        #    self.spawnBarracksTower()
+        #elif self.type == "bank":
+        #    print("5")
+        #    self.spawnBankTower()
+        else:
+            print("Invalid tower type")
+
+        groupTowers.add(self)
+        groupSprites.add(self)
+    
+    def moveTower(self):
+
+        print(pygame.mouse.get_pos())
+
+    #def buildMode(self):
+    #    # draws a blueprint of the tower
+    #    print("buildmode")
+#
+    #    isBuilding = True
+#
+    #    while isBuilding:
+    #        self.rect = self.image.get_rect(center=self.position)
+#
+    #        #groupTowers.draw(self.screen)
+#
+    #        for event in pygame.event.get():
+    #            if event.type == pygame.MOUSEMOTION:
+    #                self.rect.move_ip(event.rel)
+    #                groupTowers.draw(self.screen)
+    #            elif event.type == pygame.MOUSEBUTTONDOWN:
+    #                isBuilding = False
+    #                self.determineType()
+                    
+    def drawTower(self):
+        # draws the tower continuously on screen
+        #for tower in groupTowers:
+        groupTowers.draw(self.screen)
+
+    def kill(self) -> None:
+        self.kill()
+        print("Tower", self.type, "killed")
 
 # initialize pygame
 pygame.init()
@@ -179,6 +291,9 @@ groupEnemies = pygame.sprite.Group()
 # all Sprites should be added to this group
 groupSprites = pygame.sprite.Group()
 
+# all towers should be added to this group
+groupTowers = pygame.sprite.Group()
+
 def main():
 
     # deactivates console by default
@@ -188,15 +303,8 @@ def main():
     screen = pygame.display.set_mode((1200, 800)) # create a window 
     
     #TODO determine current wave, pass it to the spawnEnemy function
-    #enemySpawner.main(1, screen)
 
-    spawnEnemy(screen)
-
-    #for i in range(0, 10):
-#
-    #    pos = (100+(i*50), 100)
-#
-    #    Enemy(screen, pos, "light")
+    #spawnEnemy(screen)
 
     # main loop 
     while True:
@@ -220,6 +328,9 @@ def main():
                 for enemy in groupEnemies:
                     if enemy.rect.collidepoint(event.pos):
                         enemy.killEnemy()
+            elif event.type == pygame.MOUSEMOTION:
+                pass
+
             
             # check if a key has been pressed
             if event.type == pygame.KEYDOWN:
@@ -233,15 +344,22 @@ def main():
                     print("Console deactivated, press C to show")
                 elif event.key == pygame.K_k:
                     print(groupEnemies.sprites())
+                elif event.key == pygame.K_b:
+                    buildTower(screen)
 
-            # print all events if flag is set
-            if consoleActive:
-                print(event)
+        # print all events if flag is set
+        if consoleActive:
+            print(event)
 
         # draw, move all enemies continuously
         for enemy in groupEnemies:
             enemy.draw()
             enemy.move()
+
+        # draw all towers continuously
+        for tower in groupTowers:
+            tower.moveTower()
+            tower.drawTower()
             
         # update the screen continuously    
         pygame.display.update()
@@ -291,6 +409,19 @@ def spawnEnemy(screen):
     for i in range(0, amountBoss):
         pos = (100+(i*50), 400)
         Enemy(screen, pos, typeBoss)
+
+def buildTower(screen):
+    position = pygame.mouse.get_pos()
+
+    Tower(screen, position, "mg", True)
+
+    
+            
+
+    #Tower.determineType(screen, position)
+
+    pass
+
 
 if __name__ == "__main__":
     main()
