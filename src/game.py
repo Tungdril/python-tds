@@ -159,11 +159,9 @@ class Enemy(pygame.sprite.Sprite):
                 print(self.type, "reached final waypoint, commencing purge")
 
 class Tower(pygame.sprite.Sprite):
-    def __init__(self, screen, position, type, isBuildmode):
+    def __init__(self, screen, position, type):
         # calls constructor of parent class
         pygame.sprite.Sprite.__init__(self)
-
-        print("constructor called")
 
         # initializes screen, position and type
         self.screen = screen
@@ -176,11 +174,10 @@ class Tower(pygame.sprite.Sprite):
         img = pygame.transform.scale(img, (100, 100))
         self.image = img
 
-        if isBuildmode:
-            self.buildMode()
-        else:
-            # determines which tower to spawn based on the type given
-            self.determineType()
+        self.buildmode = True
+
+        # determines which tower to spawn based on the type given
+        self.determineType()
 
     def spawnMgTower(self):
         self.damage = 1
@@ -223,55 +220,36 @@ class Tower(pygame.sprite.Sprite):
     
     def determineType(self):    
         if self.type == "mg":
-            print("1")
             self.spawnMgTower()
         elif self.type == "sniper":
-            print("2")
             self.spawnSniperTower()
         elif self.type == "flamer":
-            print("3")
             self.spawnFlamerTower()
         #elif self.type == "barracks":
-        #    print("4")
         #    self.spawnBarracksTower()
         #elif self.type == "bank":
-        #    print("5")
         #    self.spawnBankTower()
         else:
             print("Invalid tower type")
 
         groupTowers.add(self)
         groupSprites.add(self)
+
+        #self.moveTower()
     
-    def moveTower(self):
-
-        print(pygame.mouse.get_pos())
-
-    #def buildMode(self):
-    #    # draws a blueprint of the tower
-    #    print("buildmode")
-#
-    #    isBuilding = True
-#
-    #    while isBuilding:
-    #        self.rect = self.image.get_rect(center=self.position)
-#
-    #        #groupTowers.draw(self.screen)
-#
-    #        for event in pygame.event.get():
-    #            if event.type == pygame.MOUSEMOTION:
-    #                self.rect.move_ip(event.rel)
-    #                groupTowers.draw(self.screen)
-    #            elif event.type == pygame.MOUSEBUTTONDOWN:
-    #                isBuilding = False
-    #                self.determineType()
-                    
-    def drawTower(self):
+    def move(self):
+        # moves the tower along with the mouse
+        if self.buildmode:
+            self.rect.center = pygame.mouse.get_pos()
+        else:
+            #set own position to the center of the rect, stops update from moving the tower
+            self.position = self.rect.center
+     
+    def draw(self):
         # draws the tower continuously on screen
-        #for tower in groupTowers:
         groupTowers.draw(self.screen)
 
-    def kill(self) -> None:
+    def killTower(self):
         self.kill()
         print("Tower", self.type, "killed")
 
@@ -297,7 +275,7 @@ groupTowers = pygame.sprite.Group()
 def main():
 
     # deactivates console by default
-    consoleActive = True
+    consoleActive = False
 
     pygame.display.set_caption("Python TDS") # set the window title
     screen = pygame.display.set_mode((1200, 800)) # create a window 
@@ -323,15 +301,22 @@ def main():
             # exit if the user clicks the close button
             if event.type == pygame.QUIT: # if the user clicks the close button, exit
                 exit()
-            # DEEBUG: kills enemy if it is clicked 
+            # DEEBUG: kills enemy if it is clicked 1: LMB, 2: MMB, 3: RMB; 4: ScrUP, 5: ScrDOWN
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                for enemy in groupEnemies:
-                    if enemy.rect.collidepoint(event.pos):
-                        enemy.killEnemy()
-            elif event.type == pygame.MOUSEMOTION:
-                pass
+                # if left mouse button is clicked
+                if event.button == 1:
+                    for enemy in groupEnemies:
+                        if enemy.rect.collidepoint(event.pos):
+                            enemy.killEnemy()
+                    for tower in groupTowers:
+                        if tower.rect.collidepoint(event.pos):
+                            tower.buildmode = False
+                # if right mouse button is clicked
+                elif event.button == 3:
+                    for tower in groupTowers:
+                        if tower.rect.collidepoint(event.pos):
+                            tower.killTower()
 
-            
             # check if a key has been pressed
             if event.type == pygame.KEYDOWN:
 
@@ -347,19 +332,21 @@ def main():
                 elif event.key == pygame.K_b:
                     buildTower(screen)
 
-        # print all events if flag is set
-        if consoleActive:
-            print(event)
+            # print all events if flag is set
+            if consoleActive:
+                print(event)
 
         # draw, move all enemies continuously
         for enemy in groupEnemies:
             enemy.draw()
             enemy.move()
 
-        # draw all towers continuously
+        # draw, move all towers continuously
         for tower in groupTowers:
-            tower.moveTower()
-            tower.drawTower()
+            tower.rect.move(pygame.mouse.get_pos())
+            
+            tower.move()
+            tower.draw()
             
         # update the screen continuously    
         pygame.display.update()
@@ -413,12 +400,7 @@ def spawnEnemy(screen):
 def buildTower(screen):
     position = pygame.mouse.get_pos()
 
-    Tower(screen, position, "mg", True)
-
-    
-            
-
-    #Tower.determineType(screen, position)
+    Tower(screen, position, "mg")
 
     pass
 
