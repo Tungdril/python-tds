@@ -204,19 +204,23 @@ class Tower(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(center=self.position)
 
-
         print("Flamer tower spawned")
 
-    #TBD
-    #def spawnBarracksTower(self):
-    #    self.damage = 1
-    #    self.range = 100
-    #    self.color = (255, 255, 0)
-    #    self.spawnRate = 1
-    #    print("Barracks tower spawned")
+    
+    def spawnBarracksTower(self):
+        self.range = 100
+        self.spawnRate = 1
 
-    #TBD
-    #def spawnBankTower(self):
+        self.rect = self.image.get_rect(center=self.position)
+
+        print("Barracks tower spawned")
+
+    def spawnBankTower(self):
+        self.spawnRate = 5
+
+        self.rect = self.image.get_rect(center=self.position)
+        
+        print("Barracks tower spawned")
     
     def determineType(self):    
         if self.type == "mg":
@@ -225,10 +229,10 @@ class Tower(pygame.sprite.Sprite):
             self.spawnSniperTower()
         elif self.type == "flamer":
             self.spawnFlamerTower()
-        #elif self.type == "barracks":
-        #    self.spawnBarracksTower()
-        #elif self.type == "bank":
-        #    self.spawnBankTower()
+        elif self.type == "barracks":
+            self.spawnBarracksTower()
+        elif self.type == "bank":
+            self.spawnBankTower()
         else:
             print("Invalid tower type")
 
@@ -253,6 +257,43 @@ class Tower(pygame.sprite.Sprite):
         self.kill()
         print("Tower", self.type, "killed")
 
+class MenuButton(pygame.sprite.Sprite):
+    def __init__(self, screen, buttonType, position):
+        pygame.sprite.Sprite.__init__(self)
+
+        img = pygame.image.load(os.getcwd() +"/assets/" + buttonType + ".png").convert_alpha()
+        img = pygame.transform.scale(img, (100, 100))
+        self.image = img
+
+        self.screen = screen
+        self.type = buttonType
+        self.position = position
+        
+        self.initialDraw()
+
+    def initialDraw(self):
+        # for some reason, rect doesn't originate from the center of the image, so we need to use topleft
+        self.rect = self.image.get_rect(topleft=self.position)
+        groupMenuButtons.add(self)
+
+    def draw(self):
+        # self.draw messes with semi-transparent images, so we need to use self.screen.blit, which in turn doesn't work with movement
+        self.screen.blit(self.image, self.position)
+
+    def buttonPressed(self):
+        if self.type == "buttonMg":
+            buildTower(self.screen, "mg")
+        elif self.type == "buttonSniper":
+            buildTower(self.screen, "sniper")
+        elif self.type == "buttonFlamer":
+            buildTower(self.screen, "flamer")
+        elif self.type == "buttonBarracks":
+            buildTower(self.screen, "barracks")
+        elif self.type == "buttonBank":
+            buildTower(self.screen, "bank")
+        else:
+            print("Invalid button type")
+
 # initialize pygame
 pygame.init()
 
@@ -260,17 +301,15 @@ pygame.init()
 clock = pygame.time.Clock()
 
 # pygame Sprite group definitions
-# all obejcts which are collidable should be added to this group
 groupColliders = pygame.sprite.Group()
 
-# all enemies should be added to this group
 groupEnemies = pygame.sprite.Group()
 
-# all Sprites should be added to this group
 groupSprites = pygame.sprite.Group()
 
-# all towers should be added to this group
 groupTowers = pygame.sprite.Group()
+
+groupMenuButtons = pygame.sprite.Group()
 
 def main():
 
@@ -284,15 +323,18 @@ def main():
 
     #spawnEnemy(screen)
 
+    # draw the build menu
+    generateBuildingMenu(screen)
+
     # main loop 
     while True:
 
         # set framerate
         clock.tick(30)
 
-        # run the main function in GUI.py
-        GUI.main(screen)
-         
+        # draw the background
+        GUI.background(screen)
+
         # draw the path
         createMapPath(screen)
 
@@ -312,6 +354,9 @@ def main():
                         if tower.rect.collidepoint(event.pos):
                             #set buildmode to false, so the tower stays in place
                             tower.buildmode = False
+                    for button in groupMenuButtons:
+                        if button.rect.collidepoint(event.pos):
+                            button.buttonPressed()
                 # if right mouse button is clicked
                 elif event.button == 3:
                     for tower in groupTowers:
@@ -331,7 +376,9 @@ def main():
                 elif event.key == pygame.K_k:
                     print(groupEnemies.sprites())
                 elif event.key == pygame.K_b:
-                    buildTower(screen)
+                    buildTower(screen, "mg")
+                    print(len(groupTowers))
+                    pass
 
             # print all events if flag is set
             if consoleActive:
@@ -345,9 +392,12 @@ def main():
         # draw, move all towers continuously
         for tower in groupTowers:
             tower.rect.move(pygame.mouse.get_pos())
-            
             tower.move()
             tower.draw()
+
+        # draw all menu buttons continuously
+        for button in groupMenuButtons:
+            button.draw()
             
         # update the screen continuously    
         pygame.display.update()
@@ -363,6 +413,15 @@ def createMapPath(screen):
     mainPath.add(groupColliders)
 
     return mainPath
+
+def generateBuildingMenu(screen):
+    posX = 180
+
+    MenuButton(screen, "buttonMg", (posX, 685))
+    MenuButton(screen, "buttonSniper", (posX*2, 685))
+    MenuButton(screen, "buttonFlamer", (posX*3, 685))
+    MenuButton(screen, "buttonBarracks", (posX*4, 685))
+    MenuButton(screen, "buttonBank", (posX*5, 685))
 
 def spawnEnemy(screen):
 
@@ -398,11 +457,11 @@ def spawnEnemy(screen):
         pos = (100+(i*50), 400)
         Enemy(screen, pos, typeBoss)
 
-def buildTower(screen):
+def buildTower(screen, type):
     position = pygame.mouse.get_pos()
 
-    Tower(screen, position, "mg")
-
+    #TODO: check if tower can be placed, if not, change color
+    Tower(screen, position, type)
     pass
 
 
@@ -410,7 +469,6 @@ if __name__ == "__main__":
     main()
 
 #   TOWERS:
-#       Tower Selection Menu
 #       Towers cost money
 #       Projectiles
 #       Tower Upgrades
