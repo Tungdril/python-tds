@@ -69,7 +69,7 @@ class Enemy(pygame.sprite.Sprite):
     def spawnLightEnemy(self):
         self.health = 100
         self.isArmored = False
-        self.speed = 5
+        self.speed = 3.5
         self.damage = 1
       
         # draws a rectangle over the image, used for collision detection
@@ -80,7 +80,7 @@ class Enemy(pygame.sprite.Sprite):
     def spawnHeavyEnemy(self):  
         self.health = 200
         self.isArmored = True
-        self.speed = 5
+        self.speed = 1.5
         self.damage = 1
 
         self.rect = self.image.get_rect(center=self.position)
@@ -100,7 +100,7 @@ class Enemy(pygame.sprite.Sprite):
     def spawnBossEnemy(self):
         self.health = 500
         self.isArmored = True
-        self.speed = 5
+        self.speed = 1
         self.damage = 2
 
         self.rect = self.image.get_rect(center=self.position)
@@ -208,7 +208,6 @@ class Tower(pygame.sprite.Sprite):
 
         print("Flamer tower spawned")
 
-    
     def spawnBarracksTower(self):
         self.range = 100
         self.spawnRate = 1
@@ -281,8 +280,9 @@ class Projectile(pygame.sprite.Sprite):
         self.target = target
         self.type = type
 
-        target.x = target.rect.x
-        target.y = target.rect.y
+        # get x and y coordinates of the target, added 25 to center the coordinates
+        target.x = target.rect.x + 25
+        target.y = target.rect.y + 25   
 
         self.imgPath = os.getcwd() + "/assets/" + type + ".png"
         img = pygame.image.load(self.imgPath).convert_alpha()
