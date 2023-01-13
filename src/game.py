@@ -6,6 +6,7 @@
 import GUI
 import readWaves
 import os
+import math
 
 try:
     import pygame # check if pygame is installed, import if it is
@@ -22,7 +23,7 @@ except ImportError:
         try:
             pip.main(["install", "pygame"])
         except:
-            print("Erorr installing pygame. Install pygame manually and try again")
+            print("Error installing pygame. Install pygame manually and try again")
             exit()
         else:
             print("Pygame installed")
@@ -151,7 +152,8 @@ class Enemy(pygame.sprite.Sprite):
             # if waypoint index is less than the length of the waypoints list, increment waypoint index
             if self.waypointsIndex < len(self.waypoints) - 1:
                 self.waypointsIndex += 1
-                print(self.type, "reached waypoint", self.waypointsIndex -1, "moving to waypoint", self.waypointsIndex)
+                #DEBUGINFO
+                #print(self.type, "reached waypoint", self.waypointsIndex -1, "moving to waypoint", self.waypointsIndex)
             # if waypoint index is equal to the length of the waypoints list, reset waypoint index to 0
             else:
                 self.waypointsIndex = 0
@@ -253,9 +255,69 @@ class Tower(pygame.sprite.Sprite):
         # draws the tower continuously on screen
         groupTowers.draw(self.screen)
 
+        #DEBUGINFO
+        #closestEnemy = getClosestEnemy(self)
+        #closestEnemy.posx = closestEnemy.rect.x
+        #closestEnemy.posy = closestEnemy.rect.y
+        #print(closestEnemy.posx, closestEnemy.posy)
+
+    def shoot(self):
+        # shoots a projectile towards the closest enemy
+        self.target = getClosestEnemy(self)
+        if self.buildmode == False:
+            Projectile(self.screen, self.rect.center, self.target, "basicBullet")
+
+
     def killTower(self):
         self.kill()
         print("Tower", self.type, "killed")
+
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, screen, position, target, type):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.screen = screen
+        self.position = position
+        self.target = target
+        self.type = type
+
+        target.x = target.rect.x
+        target.y = target.rect.y
+
+        self.imgPath = os.getcwd() + "/assets/" + type + ".png"
+        img = pygame.image.load(self.imgPath).convert_alpha()
+        img = pygame.transform.scale(img, (25, 25))
+        self.image = img
+
+        #self.rect = self.image.get_rect(center=self.position)
+
+        self.rect = self.image.get_rect(center=(target.x, target.y))
+        print(target.x, target.y)
+
+        groupProjectiles.add(self)
+
+        self.speed = 10
+
+    #def move(self):
+    #    if self.rect.x < self.target.rect.x:
+    #        self.rect.x += self.speed
+    #    elif self.rect.x > self.target.rect.x:
+    #        self.rect.x -= self.speed
+    #    if self.rect.y < self.target.rect.y:
+    #        self.rect.y += self.speed
+    #    elif self.rect.y > self.target.rect.y:
+    #        self.rect.y -= self.speed
+    #   
+    #    # if own position is equal to target position, kill projectile
+    #    if self.rect.x == self.target.rect.x and self.rect.y == self.target.rect.y:
+    #        self.killProjectile()
+
+    def draw(self):
+        groupProjectiles.draw(self.screen)
+
+    def killProjectile(self):
+        self.kill()
+        print("Projectile", self.type, "killed")
 
 class MenuButton(pygame.sprite.Sprite):
     def __init__(self, screen, buttonType, position):
@@ -311,6 +373,8 @@ groupTowers = pygame.sprite.Group()
 
 groupMenuButtons = pygame.sprite.Group()
 
+groupProjectiles = pygame.sprite.Group()
+
 def main():
 
     # deactivates console by default
@@ -321,7 +385,8 @@ def main():
     
     #TODO determine current wave, pass it to the spawnEnemy function
 
-    #spawnEnemy(screen)
+    # spawn all enemies DEBUG
+    spawnEnemy(screen)
 
     # draw the build menu
     generateBuildingMenu(screen)
@@ -354,6 +419,8 @@ def main():
                         if tower.rect.collidepoint(event.pos):
                             #set buildmode to false, so the tower stays in place
                             tower.buildmode = False
+                            tower.shoot()
+                            #getClosestEnemy(tower)
                     for button in groupMenuButtons:
                         if button.rect.collidepoint(event.pos):
                             button.buttonPressed()
@@ -376,8 +443,7 @@ def main():
                 elif event.key == pygame.K_k:
                     print(groupEnemies.sprites())
                 elif event.key == pygame.K_b:
-                    buildTower(screen, "mg")
-                    print(len(groupTowers))
+                    #newBullet = Projectile(screen, (100, 100), "closest", "basicBullet")
                     pass
 
             # print all events if flag is set
@@ -398,6 +464,11 @@ def main():
         # draw all menu buttons continuously
         for button in groupMenuButtons:
             button.draw()
+
+        # draw all projectiles continuously
+        for projectile in groupProjectiles:
+            projectile.draw()
+            #projectile.move()
             
         # update the screen continuously    
         pygame.display.update()
@@ -464,13 +535,32 @@ def buildTower(screen, type):
     Tower(screen, position, type)
     pass
 
+def getClosestEnemy(tower):
+    distances = []
+
+    for enemy in groupEnemies:
+        
+        # get the distance between the enemy and the tower
+        distance = math.hypot(enemy.rect.x - tower.rect.x, enemy.rect.y - tower.rect.y)
+
+        # add the distance and enemy instance to the list
+        distances.append([distance, enemy])
+
+    # sort the list by the distance, key gets the first item in the list (distance)
+    sortedDistances = sorted(distances, key=lambda x: x[0])
+
+    # DEBUGINFO
+    #print(sortedDistances)
+    #print(sortedDistances[0][1])
+
+    return sortedDistances[0][1]
 
 if __name__ == "__main__":
     main()
 
 #   TOWERS:
 #       Towers cost money
-#       Projectiles
+#       Projectiles/Actual damage
 #       Tower Upgrades
 #       Tower Range
 #       Towers can't intersect with each other and path
