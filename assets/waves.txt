@@ -1,2 +1,4 @@
 # Current Wave: line, split using ";", number of LightEnemy; LightEnemy; number of HeavyEnemy; HeavyEnemy; number of FastEnemy; FastEnemy, number of BossEnemy; BossEnemy
-10;light;5;heavy;3;fast;1;boss
+0;light;0;heavy;1;fast;0;boss
+2;light;0;heavy;2;fast;0;boss
+3;light;0;heavy;3;fast;0;boss

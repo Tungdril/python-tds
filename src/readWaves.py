@@ -10,6 +10,10 @@ def read(currentWave):
     # read content of line corresponding to the current wave, remove the newline character
     lineContents = file.readlines()[currentWave].replace("\n", "")
 
+    if lineContents == "end":
+        
+        return False
+
     toBeSpawned = []
 
     # split the line into a list of strings, append it to the toBeSpawned list

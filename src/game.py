@@ -375,6 +375,12 @@ groupMenuButtons = pygame.sprite.Group()
 
 groupProjectiles = pygame.sprite.Group()
 
+currentWave = 1
+
+health = 100
+
+money = 100
+
 def main():
 
     # deactivates console by default
@@ -399,6 +405,15 @@ def main():
 
         # draw the background
         GUI.background(screen)
+
+        global currentWave
+        GUI.wave(screen, currentWave)
+
+        global health
+        GUI.health(screen, health)
+
+        global money
+        GUI.money(screen, money)
 
         # draw the path
         createMapPath(screen)
@@ -455,6 +470,16 @@ def main():
             enemy.draw()
             enemy.move()
 
+        # check if all enemies are dead, if so, spawn new wave
+        if len(groupEnemies) == 0:
+            # check if all waves are done, if so, go to win state
+            if currentWave > 9:
+                winState()
+            else:
+                currentWave += 1
+                spawnEnemy(screen)
+
+
         # draw, move all towers continuously
         for tower in groupTowers:
             tower.rect.move(pygame.mouse.get_pos())
@@ -497,7 +522,7 @@ def generateBuildingMenu(screen):
 def spawnEnemy(screen):
 
     # pass the current wave to the readWaves function, returns a list of enemies to be spawned
-    toBeSpawned = readWaves.read(1)
+    toBeSpawned = readWaves.read(currentWave)
     print(toBeSpawned)
 
    #[0]: amountLight, [1]: typeLight, [2]: amountHeavy, [3]: typeHeavy, [4]: amountFast, [5]: typeFast, [6]: amountBoss, [7]: typeBoss
@@ -554,6 +579,11 @@ def getClosestEnemy(tower):
     #print(sortedDistances[0][1])
 
     return sortedDistances[0][1]
+
+def winState():
+    print("You win!")
+    pygame.quit()
+    return
 
 if __name__ == "__main__":
     main()
