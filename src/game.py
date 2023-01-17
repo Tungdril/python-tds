@@ -34,6 +34,12 @@ except ImportError:
 # print pygame version
 # print(pygame.version.ver)
 
+currentWave = 1
+
+health = 100
+
+money = 1000
+
 # class definitions
 class Path(pygame.sprite.Sprite):
     def __init__(self, screen, color, points, width):
@@ -81,7 +87,7 @@ class Enemy(pygame.sprite.Sprite):
         self.health = 200
         self.isArmored = True
         self.speed = 1.5
-        self.damage = 1
+        self.damage = 5
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -91,7 +97,7 @@ class Enemy(pygame.sprite.Sprite):
         self.health = 100
         self.isArmored = False
         self.speed = 5
-        self.damage = 1
+        self.damage = 150
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -101,7 +107,7 @@ class Enemy(pygame.sprite.Sprite):
         self.health = 500
         self.isArmored = True
         self.speed = 1
-        self.damage = 2
+        self.damage = 100
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -157,6 +163,15 @@ class Enemy(pygame.sprite.Sprite):
             # if waypoint index is equal to the length of the waypoints list, reset waypoint index to 0
             else:
                 self.waypointsIndex = 0
+
+                #if enemy reaches final waypoint, substract damage from health
+                global health
+                health -= self.damage
+                #if health is less than or equal to 0, call looseState()
+                if health <= 0:
+                    looseState()          
+                
+                #remove enemy object
                 self.killEnemy()
                 print(self.type, "reached final waypoint, commencing purge")
 
@@ -185,10 +200,9 @@ class Tower(pygame.sprite.Sprite):
         self.damage = 1
         self.range = 100
         self.fireRate = 10
+        self.price = 100
 
         self.rect = self.image.get_rect(center=self.position)
-
-        print("MG tower spawned")
     
     def spawnSniperTower(self):
         self.damage = 2
@@ -203,6 +217,7 @@ class Tower(pygame.sprite.Sprite):
         self.damage = 0.5
         self.range = 50
         self.fireRate = 10
+
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -266,7 +281,6 @@ class Tower(pygame.sprite.Sprite):
         if self.buildmode == False:
             Projectile(self.screen, self.rect.center, self.target, "basicBullet")
 
-
     def killTower(self):
         self.kill()
         print("Tower", self.type, "killed")
@@ -297,20 +311,6 @@ class Projectile(pygame.sprite.Sprite):
         groupProjectiles.add(self)
 
         self.speed = 10
-
-    #def move(self):
-    #    if self.rect.x < self.target.rect.x:
-    #        self.rect.x += self.speed
-    #    elif self.rect.x > self.target.rect.x:
-    #        self.rect.x -= self.speed
-    #    if self.rect.y < self.target.rect.y:
-    #        self.rect.y += self.speed
-    #    elif self.rect.y > self.target.rect.y:
-    #        self.rect.y -= self.speed
-    #   
-    #    # if own position is equal to target position, kill projectile
-    #    if self.rect.x == self.target.rect.x and self.rect.y == self.target.rect.y:
-    #        self.killProjectile()
 
     def draw(self):
         groupProjectiles.draw(self.screen)
@@ -374,12 +374,6 @@ groupTowers = pygame.sprite.Group()
 groupMenuButtons = pygame.sprite.Group()
 
 groupProjectiles = pygame.sprite.Group()
-
-currentWave = 1
-
-health = 100
-
-money = 100
 
 def main():
 
@@ -458,6 +452,9 @@ def main():
                 elif event.key == pygame.K_k:
                     print(groupEnemies.sprites())
                 elif event.key == pygame.K_b:
+                    #DEBUG: kill all enemies
+                    for enemy in groupEnemies:
+                        enemy.killEnemy()
                     #newBullet = Projectile(screen, (100, 100), "closest", "basicBullet")
                     pass
 
@@ -538,27 +535,48 @@ def spawnEnemy(screen):
 
     #iterate through the list of enemies to be spawned, spawns each enemy
     for i in range(0, amountLight):
-        pos = (100+(i*50), 100)
+        pos = (-100-(i*150), 500)
         Enemy(screen, pos, typeLight)
         
     for i in range(0, amountHeavy):
-        pos = (100+(i*50), 200)
+        pos = (-100-(i*150), 500)
         Enemy(screen, pos, typeHeavy)
 
     for i in range(0, amountFast):
-        pos = (100+(i*50), 300)
+        pos = (-100-(i*150), 500)
         Enemy(screen, pos, typeFast)
 
     for i in range(0, amountBoss):
-        pos = (100+(i*50), 400)
+        pos = (-100-(i*150), 500)
         Enemy(screen, pos, typeBoss)
 
 def buildTower(screen, type):
     position = pygame.mouse.get_pos()
 
-    #TODO: check if tower can be placed, if not, change color
-    Tower(screen, position, type)
-    pass
+    if checkPrice(type):
+        #TODO: check if tower can be placed, if not, change color
+        Tower(screen, position, type)
+
+def checkPrice(type):
+
+    if type == "mg":
+        towerPrice = 100
+    elif type == "sniper":
+        towerPrice = 200
+    elif type == "flamer":
+        towerPrice = 500
+    elif type == "barracks":
+        towerPrice = 500
+    elif type == "bank":
+        towerPrice = 300
+
+    global money
+    if towerPrice <= money:
+        money -= towerPrice
+        return True
+    else:
+        print("Not enough money!")
+        return False
 
 def getClosestEnemy(tower):
     distances = []
@@ -582,6 +600,11 @@ def getClosestEnemy(tower):
 
 def winState():
     print("You win!")
+    pygame.quit()
+    return
+
+def looseState():
+    print("You loose!")
     pygame.quit()
     return
 
