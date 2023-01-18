@@ -73,7 +73,7 @@ class Enemy(pygame.sprite.Sprite):
         self.determineType()
 
     def spawnLightEnemy(self):
-        self.health = 100
+        self.health = 25
         self.speed = 3.5
         self.damage = 1
       
@@ -83,7 +83,7 @@ class Enemy(pygame.sprite.Sprite):
         print("Light enemy spawned")
 
     def spawnHeavyEnemy(self):  
-        self.health = 250
+        self.health = 100
         self.speed = 1.5
         self.damage = 5
 
@@ -92,7 +92,7 @@ class Enemy(pygame.sprite.Sprite):
         print("Heavy enemy spawned")
 
     def spawnFastEnemy(self):  
-        self.health = 150
+        self.health = 50
         self.speed = 5
         self.damage = 150
 
@@ -101,7 +101,7 @@ class Enemy(pygame.sprite.Sprite):
         print("Fast enemy spawned")
 
     def spawnBossEnemy(self):
-        self.health = 1000
+        self.health = 500
         self.speed = 1
         self.damage = 100
 
@@ -199,7 +199,7 @@ class Tower(pygame.sprite.Sprite):
         self.determineType()
 
     def spawnMgTower(self):
-        self.damage = 1
+        self.damage = 2
         self.range = 100
         self.fireRate = 500
         self.price = 100
@@ -207,7 +207,7 @@ class Tower(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.position)
     
     def spawnSniperTower(self):
-        self.damage = 2
+        self.damage = 10
         self.range = 200
         self.fireRate = 2000
 
@@ -306,8 +306,8 @@ class Projectile(pygame.sprite.Sprite):
         self.image = img
 
         self.rect = self.image.get_rect(center=(self.position))
-        print(target.x, target.y)
-        print(self.target)
+        #DEBUGINFO
+        #print(target.x, target.y)
 
         groupProjectiles.add(self)
 
