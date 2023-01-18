@@ -3,8 +3,6 @@ import os
 
 path = (os.getcwd())
 
-
-
 def background(screen):
     img = pygame.image.load(path +"/assets/map.png").convert()
     img = pygame.transform.scale(img, (1200, 800))

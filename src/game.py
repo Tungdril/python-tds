@@ -68,7 +68,6 @@ class Enemy(pygame.sprite.Sprite):
 
     def spawnLightEnemy(self):
         self.health = 100
-        self.isArmored = False
         self.speed = 3.5
         self.damage = 1
       
@@ -78,8 +77,7 @@ class Enemy(pygame.sprite.Sprite):
         print("Light enemy spawned")
 
     def spawnHeavyEnemy(self):  
-        self.health = 200
-        self.isArmored = True
+        self.health = 250
         self.speed = 1.5
         self.damage = 1
 
@@ -88,8 +86,7 @@ class Enemy(pygame.sprite.Sprite):
         print("Heavy enemy spawned")
 
     def spawnFastEnemy(self):  
-        self.health = 100
-        self.isArmored = False
+        self.health = 150
         self.speed = 5
         self.damage = 1
 
@@ -98,8 +95,7 @@ class Enemy(pygame.sprite.Sprite):
         print("Fast enemy spawned")
 
     def spawnBossEnemy(self):
-        self.health = 500
-        self.isArmored = True
+        self.health = 1000
         self.speed = 1
         self.damage = 2
 
@@ -124,8 +120,11 @@ class Enemy(pygame.sprite.Sprite):
         print("Current enemies:", len(groupEnemies.sprites()))
 
     def draw(self):
-        # draws the enemy continuously on screen
-        groupEnemies.draw(self.screen)
+        # draws the enemy continuously on screen, kills the enemy if health is below 0
+        if self.health <= 0:
+            self.killEnemy()
+        else:
+            groupEnemies.draw(self.screen)
 
     def killEnemy(self):
         # removes the enemy from all groups, preventing it from being drawn
@@ -165,6 +164,9 @@ class Tower(pygame.sprite.Sprite):
         # calls constructor of parent class
         pygame.sprite.Sprite.__init__(self)
 
+        # initializes cooldown 
+        self.last = pygame.time.get_ticks()
+
         # initializes screen, position and type
         self.screen = screen
         self.position = position
@@ -184,7 +186,7 @@ class Tower(pygame.sprite.Sprite):
     def spawnMgTower(self):
         self.damage = 1
         self.range = 100
-        self.fireRate = 10
+        self.fireRate = 500
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -193,7 +195,7 @@ class Tower(pygame.sprite.Sprite):
     def spawnSniperTower(self):
         self.damage = 2
         self.range = 200
-        self.fireRate = 2
+        self.fireRate = 2000
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -202,7 +204,7 @@ class Tower(pygame.sprite.Sprite):
     def spawnFlamerTower(self):
         self.damage = 0.5
         self.range = 50
-        self.fireRate = 10
+        self.fireRate = 250
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -210,14 +212,14 @@ class Tower(pygame.sprite.Sprite):
 
     def spawnBarracksTower(self):
         self.range = 100
-        self.spawnRate = 1
+        self.fireRate = 5000
 
         self.rect = self.image.get_rect(center=self.position)
 
         print("Barracks tower spawned")
 
     def spawnBankTower(self):
-        self.spawnRate = 5
+        self.fireRate = 10000
 
         self.rect = self.image.get_rect(center=self.position)
         
@@ -239,8 +241,6 @@ class Tower(pygame.sprite.Sprite):
 
         groupTowers.add(self)
         groupSprites.add(self)
-
-        #self.moveTower()
     
     def move(self):
         # moves the tower along with the mouse
@@ -254,17 +254,17 @@ class Tower(pygame.sprite.Sprite):
         # draws the tower continuously on screen
         groupTowers.draw(self.screen)
 
-        #DEBUGINFO
-        #closestEnemy = getClosestEnemy(self)
-        #closestEnemy.posx = closestEnemy.rect.x
-        #closestEnemy.posy = closestEnemy.rect.y
-        #print(closestEnemy.posx, closestEnemy.posy)
-
     def shoot(self):
         # shoots a projectile towards the closest enemy
         self.target = getClosestEnemy(self)
-        if self.buildmode == False:
-            Projectile(self.screen, self.rect.center, self.target, "basicBullet")
+
+        #get the current time
+        now = pygame.time.get_ticks()
+
+        #if the current time is greater or equal to the last time the tower shot + the fire rate, shoot
+        if now - self.last >= self.fireRate and self.buildmode == False:
+            self.last = now
+            Projectile(self.screen, self.rect.center, self.target, "basicBullet", self.damage)
 
 
     def killTower(self):
@@ -272,13 +272,14 @@ class Tower(pygame.sprite.Sprite):
         print("Tower", self.type, "killed")
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, screen, position, target, type):
+    def __init__(self, screen, position, target, type, damage):
         pygame.sprite.Sprite.__init__(self)
 
         self.screen = screen
         self.position = position
         self.target = target
         self.type = type
+        self.damage = damage
 
         # get x and y coordinates of the target, added 25 to center the coordinates
         target.x = target.rect.x + 25
@@ -289,35 +290,33 @@ class Projectile(pygame.sprite.Sprite):
         img = pygame.transform.scale(img, (25, 25))
         self.image = img
 
-        #self.rect = self.image.get_rect(center=self.position)
-
-        self.rect = self.image.get_rect(center=(target.x, target.y))
+        self.rect = self.image.get_rect(center=(self.position))
         print(target.x, target.y)
+        print(self.target)
 
         groupProjectiles.add(self)
 
-        self.speed = 10
+        self.speed = 5
 
-    #def move(self):
-    #    if self.rect.x < self.target.rect.x:
-    #        self.rect.x += self.speed
-    #    elif self.rect.x > self.target.rect.x:
-    #        self.rect.x -= self.speed
-    #    if self.rect.y < self.target.rect.y:
-    #        self.rect.y += self.speed
-    #    elif self.rect.y > self.target.rect.y:
-    #        self.rect.y -= self.speed
-    #   
-    #    # if own position is equal to target position, kill projectile
-    #    if self.rect.x == self.target.rect.x and self.rect.y == self.target.rect.y:
-    #        self.killProjectile()
+    #write a function that constantly moves the projectile towards the target
+    def move(self):
+
+        # if the projectile is close enough to the target, kill it
+        if self.rect.x > self.target.x - 25 and self.rect.x < self.target.x + 25 and self.rect.y > self.target.y - 25 and self.rect.y < self.target.y + 25:
+            self.killProjectile()
+
+            self.target.health -= self.damage
+            print("Enemy health:", self.target.health)
+
+        # move the projectile towards the target
+        self.rect.x += (self.target.x - self.rect.x) / self.speed
+        self.rect.y += (self.target.y - self.rect.y) / self.speed
 
     def draw(self):
         groupProjectiles.draw(self.screen)
 
     def killProjectile(self):
         self.kill()
-        print("Projectile", self.type, "killed")
 
 class MenuButton(pygame.sprite.Sprite):
     def __init__(self, screen, buttonType, position):
@@ -388,8 +387,6 @@ def main():
 
     pygame.display.set_caption("Python TDS") # set the window title
     screen = pygame.display.set_mode((1200, 800)) # create a window 
-    
-    #TODO determine current wave, pass it to the spawnEnemy function
 
     # spawn all enemies DEBUG
     spawnEnemy(screen)
@@ -434,7 +431,7 @@ def main():
                         if tower.rect.collidepoint(event.pos):
                             #set buildmode to false, so the tower stays in place
                             tower.buildmode = False
-                            tower.shoot()
+                            #tower.shoot()
                             #getClosestEnemy(tower)
                     for button in groupMenuButtons:
                         if button.rect.collidepoint(event.pos):
@@ -485,6 +482,7 @@ def main():
             tower.rect.move(pygame.mouse.get_pos())
             tower.move()
             tower.draw()
+            tower.shoot()
 
         # draw all menu buttons continuously
         for button in groupMenuButtons:
@@ -493,7 +491,7 @@ def main():
         # draw all projectiles continuously
         for projectile in groupProjectiles:
             projectile.draw()
-            #projectile.move()
+            projectile.move()
             
         # update the screen continuously    
         pygame.display.update()
@@ -638,3 +636,6 @@ if __name__ == "__main__":
 #       Projectiles
 #       GUI
 #       Icons: Money, Health, Wave, Tower, Sell, Upgrade, Start Wave, Window favicon
+
+# Task for students:
+# have the sniper tower shoot at a random enemy instead
