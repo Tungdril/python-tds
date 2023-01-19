@@ -8,4 +8,4 @@
 7;light;0;heavy;3;fast;0;boss
 8;light;0;heavy;3;fast;0;boss
 9;light;0;heavy;3;fast;0;boss
-10;light;0;heavy;3;fast;0;boss
+0;light;0;heavy;0;fast;1;boss

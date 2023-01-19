@@ -62,11 +62,16 @@ class Enemy(pygame.sprite.Sprite):
         # loads the image, scales it to 50x50, makes alpha channel transparent
         self.imgPath = os.getcwd() + "/assets/" + type + ".png"
         img = pygame.image.load(self.imgPath).convert_alpha()
-        img = pygame.transform.scale(img, (50, 50))
+        
+        #prevents the boss from being scaled down, would loose detail otherwise
+        if not type ==  "boss":
+            img = pygame.transform.scale(img, (50, 50))
         self.image = img
 
         # sets waypoints to follow
-        self.waypoints = [(-50, 390), (330, 390), (330, 170), (580, 170), (580, 580), (310, 580), (310, 710), (940, 710), (940, 470), (710, 460), (710, 300), (970, 290), (970, 5), (700, 5), (700,-50)]
+        #placeholder path
+        #self.waypoints = [(-50, 390), (330, 390), (330, 170), (580, 170), (580, 580), (310, 580), (310, 710), (940, 710), (940, 470), (710, 460), (710, 300), (970, 290), (970, 5), (700, 5), (700,-50)]
+        self.waypoints = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 485), (645, 20), (805, 20), (805, 145), (1115, 150), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520)]
         self.waypointsIndex = 0
 
         # determines which enemy to spawn based on the type given
@@ -94,7 +99,7 @@ class Enemy(pygame.sprite.Sprite):
     def spawnFastEnemy(self):  
         self.health = 50
         self.speed = 5
-        self.damage = 150
+        self.damage = 2
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -104,7 +109,9 @@ class Enemy(pygame.sprite.Sprite):
         self.health = 500
         self.speed = 1
         self.damage = 100
+        self.image = pygame.transform.scale(self.image, (52, 80))
 
+        #TODO: offset boss enemy on y-axis
         self.rect = self.image.get_rect(center=self.position)
 
         print("Boss enemy spawned")
@@ -129,8 +136,7 @@ class Enemy(pygame.sprite.Sprite):
         # draws the enemy continuously on screen, kills the enemy if health is below 0
         if self.health <= 0:
             self.killEnemy()
-        else:
-            groupEnemies.draw(self.screen)
+        groupEnemies.draw(self.screen)
 
     def killEnemy(self):
         # removes the enemy from all groups, preventing it from being drawn
@@ -226,6 +232,7 @@ class Tower(pygame.sprite.Sprite):
         print("Flamer tower spawned")
 
     def spawnBarracksTower(self):
+        self.damage = 0
         self.range = 100
         self.fireRate = 5000
 
@@ -234,6 +241,7 @@ class Tower(pygame.sprite.Sprite):
         print("Barracks tower spawned")
 
     def spawnBankTower(self):
+        self.damage = 0
         self.fireRate = 10000
 
         self.rect = self.image.get_rect(center=self.position)
@@ -480,12 +488,14 @@ def main():
             enemy.move()
 
         # check if all enemies are dead, if so, spawn new wave
+        #DEBUG, set back to 0!
         if len(groupEnemies) == 0:
             # check if all waves are done, if so, go to win state
             if currentWave > 9:
                 winState()
             else:
                 currentWave += 1
+                #DEBUG, uncomment to spawn enemies
                 spawnEnemy(screen)
 
 
@@ -511,7 +521,7 @@ def main():
 def createMapPath(screen):
 
     # defines path corners
-    points = [(0, 380), (320, 380), (320, 160), (640, 160), (640, 630), (360 , 630), (360, 700), (930, 700), (930, 520), (700, 520), (700, 290), (960, 290), (960, 60), (700, 60), (700, 0), (1030, 0), (1030, 350), (760, 350), (760, 460), (1000, 460), (1000, 760), (290, 760), (290, 560), (560, 560), (560, 220), (390, 220), (390, 440), (0, 440)]                                                                                            
+    points = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 485), (645, 20), (805, 20), (805, 145), (1115, 150), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520), (1250, 900), (-50, 900)]
 
     # create new Path object
     mainPath = Path(screen, (255, 0, 0), points, 2)
@@ -625,7 +635,6 @@ if __name__ == "__main__":
     main()
 
 #   TOWERS:
-#       Towers cost money
 #       Projectiles/Actual damage
 #       Tower Upgrades
 #       Tower Range
@@ -634,9 +643,6 @@ if __name__ == "__main__":
 #       Sell towers
 #
 #   GUI/GAMEPLAY:
-#       Base Health 
-#       Wave System
-#       Money System
 #       Game over Screen
 #       Main menu
 #       Pause between waves/start wave button

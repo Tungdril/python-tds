@@ -4,7 +4,7 @@ import os
 path = (os.getcwd())
 
 def background(screen):
-    img = pygame.image.load(path +"/assets/map.png").convert()
+    img = pygame.image.load(path +"/assets/map.jpeg").convert()
     img = pygame.transform.scale(img, (1200, 800))
 
     screen.blit(img, (0, 0))
