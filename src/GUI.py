@@ -23,3 +23,9 @@ def money(screen, money):
     font = pygame.font.SysFont("daytona", 40)
     text = font.render("Money: " + str(money) + "$", True, (0,0,0))
     screen.blit(text, (10, 760))
+
+def gameOver(screen):
+    img = pygame.image.load(path +"/assets/game_over.png").convert()
+    img = pygame.transform.scale(img, (1200, 800))
+
+    screen.blit(img, (0, 0))

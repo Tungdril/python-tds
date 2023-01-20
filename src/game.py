@@ -182,10 +182,7 @@ class Enemy(pygame.sprite.Sprite):
 
                 #if enemy reaches final waypoint, subtract damage from health
                 global health
-                health -= self.damage
-                #if health is less than or equal to 0, call looseState()
-                if health <= 0:
-                    looseState()          
+                health -= self.damage      
                 
                 #remove enemy object
                 self.killEnemy()
@@ -301,8 +298,6 @@ class Tower(pygame.sprite.Sprite):
             Projectile(self.screen, self.rect.center, self.target, "basicBullet", self.damage)
 
     def killTower(self):
-        #global money
-        #money += self.price
         self.kill()
         print("Tower", self.type, "killed")
 
@@ -330,6 +325,7 @@ class Projectile(pygame.sprite.Sprite):
         #print(target.x, target.y)
 
         groupProjectiles.add(self)
+        groupSprites.add(self)
 
         self.speed = 5
 
@@ -341,7 +337,7 @@ class Projectile(pygame.sprite.Sprite):
             self.killProjectile()
 
             self.target.health -= self.damage
-            print("Enemy health:", self.target.health)
+            #print("Enemy health:", self.target.health)
 
         # move the projectile towards the target
         self.rect.x += (self.target.x - self.rect.x) / self.speed
@@ -366,6 +362,7 @@ class MenuButton(pygame.sprite.Sprite):
         self.position = position
         
         self.initialDraw()
+        groupSprites.add(self)
 
     def initialDraw(self):
         # for some reason, rect doesn't originate from the center of the image, so we need to use topleft
@@ -448,6 +445,10 @@ def main():
         # draw the path
         createMapPath(screen)
 
+        #if health is less than or equal to 0, call looseState()
+        if health <= 0:
+            looseState(screen)  
+
         for event in pygame.event.get():
 
             # exit if the user clicks the close button
@@ -487,8 +488,8 @@ def main():
                     consoleActive = False
                     print("Console deactivated, press C to show")
                 elif event.key == pygame.K_k:
-                    for tower in groupTowers:
-                        print(tower.price)
+                    #DEBUG
+                    health = 0
                 elif event.key == pygame.K_b:
                     #DEBUG: kill all enemies
                     for enemy in groupEnemies:
@@ -504,13 +505,13 @@ def main():
             enemy.draw()
             enemy.move()
 
-        # check if all enemies are dead, if so, spawn new wave
+        # check if all enemies are dead, if so, spawn new wave, only if health is above 0
         #DEBUG, set back to 0!
-        if len(groupEnemies) == 0:
+        if len(groupEnemies) == 0 and health > 0:
             # check if all waves are done, if so, go to win state
             if currentWave > 9:
                 winState()
-            else:
+            elif health < 0:
                 currentWave += 1
                 #DEBUG, uncomment to spawn enemies
                 spawnEnemy(screen)
@@ -658,13 +659,18 @@ def getClosestEnemy(tower):
 def winState():
     print("You win!")
     pygame.quit()
-    return
+    exit()
 
-def looseState():
-    print("You loose!")
-    pygame.quit()
-    return
+def looseState(screen):
+    GUI.gameOver(screen)
 
+    for e in groupSprites:
+        e.kill()
+    #print("You loose!")
+    #pygame.quit()
+    #exit()
+
+    
 if __name__ == "__main__":
     main()
 
@@ -674,13 +680,13 @@ if __name__ == "__main__":
 #       Tower Range
 #       Towers can't intersect with each other and path
 #       Change color in buildmode/intersection   
-#       Sell towers
 #
 #   GUI/GAMEPLAY:
 #       Game over Screen
-#       Main menu
+#       Main menu + Tutorial
 #       Pause between waves/start wave button
-#
+#       Tutorial
+#       
 #   TBD:
 #   Hard to implement damage system:
 #       Barracks or different tower? (Minefield)
@@ -708,7 +714,6 @@ if __name__ == "__main__":
 #       Projectile hitting enemy
 #
 #   GRAPHICS:
-#       Map
 #       Towers including different upgrades
 #       Enemies 
 #       Projectiles
