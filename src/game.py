@@ -69,9 +69,13 @@ class Enemy(pygame.sprite.Sprite):
         self.image = img
 
         # sets waypoints to follow
-        #placeholder path
-        #self.waypoints = [(-50, 390), (330, 390), (330, 170), (580, 170), (580, 580), (310, 580), (310, 710), (940, 710), (940, 470), (710, 460), (710, 300), (970, 290), (970, 5), (700, 5), (700,-50)]
-        self.waypoints = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 485), (645, 20), (805, 20), (805, 145), (1115, 150), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520)]
+        self.waypoints = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 490), (645, 20), (805, 20), (805, 145), (1115, 145), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520)]
+        
+        # duplicates the waypoints for the boss enemy, since it needs to be offset on the y-axis
+        self.waypointsBoss = self.waypoints.copy()
+        for i in range(len(self.waypointsBoss)):
+            self.waypointsBoss[i] = (self.waypointsBoss[i][0], self.waypointsBoss[i][1] -30)
+
         self.waypointsIndex = 0
 
         # determines which enemy to spawn based on the type given
@@ -111,7 +115,8 @@ class Enemy(pygame.sprite.Sprite):
         self.damage = 100
         self.image = pygame.transform.scale(self.image, (52, 80))
 
-        #TODO: offset boss enemy on y-axis
+        self.waypoints = self.waypointsBoss
+
         self.rect = self.image.get_rect(center=self.position)
 
         print("Boss enemy spawned")
@@ -130,6 +135,7 @@ class Enemy(pygame.sprite.Sprite):
         # after spawning the enemy, add it to the groupEnemies group
         groupEnemies.add(self)
         groupSprites.add(self)
+        #DEBUGINFO
         print("Current enemies:", len(groupEnemies.sprites()))
 
     def draw(self):
@@ -144,6 +150,11 @@ class Enemy(pygame.sprite.Sprite):
         print("Enemy", self.type, "killed")
 
     def move(self):
+
+        # if the enemy is the boss, use the boss waypoints
+        if self.type == "boss":
+            self.waypoints = self.waypointsBoss
+
         # moves the enemy along a predefined path
         # if own position on x-axis is less than target position, increment x-axis by speed
         if self.rect.x < self.waypoints[self.waypointsIndex][0]:
@@ -169,7 +180,7 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 self.waypointsIndex = 0
 
-                #if enemy reaches final waypoint, substract damage from health
+                #if enemy reaches final waypoint, subtract damage from health
                 global health
                 health -= self.damage
                 #if health is less than or equal to 0, call looseState()
@@ -181,7 +192,7 @@ class Enemy(pygame.sprite.Sprite):
                 print(self.type, "reached final waypoint, commencing purge")
 
 class Tower(pygame.sprite.Sprite):
-    def __init__(self, screen, position, type):
+    def __init__(self, screen, position, type, price):
         # calls constructor of parent class
         pygame.sprite.Sprite.__init__(self)
 
@@ -192,6 +203,7 @@ class Tower(pygame.sprite.Sprite):
         self.screen = screen
         self.position = position
         self.type = type
+        self.price = price
 
         # loads the image, scales it to 50x50, makes alpha channel transparent
         self.imgPath = os.getcwd() + "/assets/" + type + ".png"
@@ -208,7 +220,6 @@ class Tower(pygame.sprite.Sprite):
         self.damage = 2
         self.range = 100
         self.fireRate = 500
-        self.price = 100
 
         self.rect = self.image.get_rect(center=self.position)
     
@@ -289,8 +300,9 @@ class Tower(pygame.sprite.Sprite):
             self.last = now
             Projectile(self.screen, self.rect.center, self.target, "basicBullet", self.damage)
 
-
     def killTower(self):
+        #global money
+        #money += self.price
         self.kill()
         print("Tower", self.type, "killed")
 
@@ -365,6 +377,7 @@ class MenuButton(pygame.sprite.Sprite):
         self.screen.blit(self.image, self.position)
 
     def buttonPressed(self):
+        # depending on the button type pressed, build a tower
         if self.type == "buttonMg":
             buildTower(self.screen, "mg")
         elif self.type == "buttonSniper":
@@ -377,6 +390,8 @@ class MenuButton(pygame.sprite.Sprite):
             buildTower(self.screen, "bank")
         else:
             print("Invalid button type")
+
+# ---------------------------------------------------------------------------------------------------- #
 
 # initialize pygame
 pygame.init()
@@ -420,6 +435,7 @@ def main():
         # draw the background
         GUI.background(screen)
 
+        # yeah I know globals are bad practice, but this is easiest and practical enough
         global currentWave
         GUI.wave(screen, currentWave)
 
@@ -457,6 +473,7 @@ def main():
                 elif event.button == 3:
                     for tower in groupTowers:
                         if tower.rect.collidepoint(event.pos):
+                            money += int(tower.price * 0.25)
                             tower.killTower()
 
             # check if a key has been pressed
@@ -470,12 +487,12 @@ def main():
                     consoleActive = False
                     print("Console deactivated, press C to show")
                 elif event.key == pygame.K_k:
-                    print(groupEnemies.sprites())
+                    for tower in groupTowers:
+                        print(tower.price)
                 elif event.key == pygame.K_b:
                     #DEBUG: kill all enemies
                     for enemy in groupEnemies:
                         enemy.killEnemy()
-                    #newBullet = Projectile(screen, (100, 100), "closest", "basicBullet")
                     pass
 
             # print all events if flag is set
@@ -498,7 +515,6 @@ def main():
                 #DEBUG, uncomment to spawn enemies
                 spawnEnemy(screen)
 
-
         # draw, move all towers continuously
         for tower in groupTowers:
             tower.rect.move(pygame.mouse.get_pos())
@@ -518,21 +534,30 @@ def main():
         # update the screen continuously    
         pygame.display.update()
 
+# ---------------------------------------------------------------------------------------------------- #
+
 def createMapPath(screen):
 
     # defines path corners
-    points = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 485), (645, 20), (805, 20), (805, 145), (1115, 150), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520), (1250, 900), (-50, 900)]
+    points = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 490), (645, 20), (805, 20), (805, 145), (1115, 145), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520), (1250, 900), (-50, 900)]
 
-    # create new Path object
+    waypointsBoss = points.copy()
+    
+    for i in range(len(waypointsBoss)):
+        waypointsBoss[i] = (waypointsBoss[i][0], waypointsBoss[i][1]-30)
+
+    # gives a visuel representation of the paths for debugging
     mainPath = Path(screen, (255, 0, 0), points, 2)
+    bossPath = Path(screen, (0, 255, 0), waypointsBoss, 2)
 
+    # not sure if I'll even use this, but it's there
     mainPath.add(groupColliders)
-
-    return mainPath
+    bossPath.add(groupColliders)
 
 def generateBuildingMenu(screen):
     posX = 180
 
+    # create the menu buttons, not perfecly aligned, but close enough
     MenuButton(screen, "buttonMg", (posX, 685))
     MenuButton(screen, "buttonSniper", (posX*2, 685))
     MenuButton(screen, "buttonFlamer", (posX*3, 685))
@@ -556,7 +581,7 @@ def spawnEnemy(screen):
     typeFast = toBeSpawned[5]
     typeBoss = toBeSpawned[7]
 
-    #iterate through the list of enemies to be spawned, spawns each enemy
+    # iterate through the list of enemies to be spawned, spawns each enemy offset by 150 px each
     for i in range(0, amountLight):
         pos = (-100-(i*150), 500)
         Enemy(screen, pos, typeLight)
@@ -576,12 +601,20 @@ def spawnEnemy(screen):
 def buildTower(screen, type):
     position = pygame.mouse.get_pos()
 
-    if checkPrice(type):
+    # check if there is enough money to build the tower, returns the price of the tower
+    towerPrice = checkPrice(type)
+
+    # subtracts the price of the tower from money
+    if towerPrice != None:
+        global money
+        money -= towerPrice
+
         #TODO: check if tower can be placed, if not, change color
-        Tower(screen, position, type)
+        Tower(screen, position, type, towerPrice)
 
 def checkPrice(type):
 
+    # probably better to set these as attributes of the tower class, but works good enough
     if type == "mg":
         towerPrice = 100
     elif type == "sniper":
@@ -595,11 +628,12 @@ def checkPrice(type):
 
     global money
     if towerPrice <= money:
-        money -= towerPrice
-        return True
+        print("after if", money)
+        return towerPrice
     else:
         print("Not enough money!")
-        return False
+        towerPrice = None
+        return towerPrice
 
 def getClosestEnemy(tower):
     distances = []
