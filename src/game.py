@@ -511,7 +511,7 @@ def main():
             # check if all waves are done, if so, go to win state
             if currentWave > 9:
                 winState()
-            elif health < 0:
+            elif health > 0:
                 currentWave += 1
                 #DEBUG, uncomment to spawn enemies
                 spawnEnemy(screen)
@@ -682,7 +682,7 @@ if __name__ == "__main__":
 #       Change color in buildmode/intersection   
 #
 #   GUI/GAMEPLAY:
-#       Game over Screen
+#       Retry button
 #       Main menu + Tutorial
 #       Pause between waves/start wave button
 #       Tutorial
