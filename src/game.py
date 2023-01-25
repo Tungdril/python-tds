@@ -49,6 +49,19 @@ class Path(pygame.sprite.Sprite):
         # draws a polygon based on the points given on the screen
         pygame.draw.polygon(screen, color, points, width)
 
+class PathCollider(pygame.sprite.Sprite):
+    def __init__(self, screen, rect):
+        # calls constructor of parent class
+        pygame.sprite.Sprite.__init__(self)
+
+        # neccessary for collision detection
+        self.rect = rect
+
+        # draws a rectangle based on the points given on the screen
+        pygame.draw.rect(screen, (255,255,0), rect, 2)
+
+        self.add(groupPathColliders)
+
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, screen, position, type):
         # calls constructor of parent class
@@ -251,6 +264,7 @@ class Tower(pygame.sprite.Sprite):
     def spawnBankTower(self):
         self.damage = 0
         self.fireRate = 10000
+        self.range = 60
 
         self.rect = self.image.get_rect(center=self.position)
         
@@ -274,12 +288,31 @@ class Tower(pygame.sprite.Sprite):
         groupSprites.add(self)
     
     def move(self):
+
+        
+
         # moves the tower along with the mouse
         if self.buildmode:
+
             self.rect.center = pygame.mouse.get_pos()
+            collision = pygame.sprite.spritecollide(self, groupPathColliders, False) or pygame.sprite.spritecollide(self, groupStaticTowers, False)
+
+            if collision:
+                #draws a circle around the tower to show the range, red if colliding with path, green if not
+                pygame.draw.circle(self.screen, (255, 0, 0), self.rect.center, self.range, 3)
+
+                self.collision = True
+                print("collision")
+            else:
+                pygame.draw.circle(self.screen, (0, 255, 0), self.rect.center, self.range, 3)
+
+                print("no collision")
+                self.collision = False
         else:
             #set own position to the center of the rect, stops update from moving the tower
+            self.collision = False
             self.position = self.rect.center
+            self.add(groupStaticTowers)
      
     def draw(self):
         # draws the tower continuously on screen
@@ -405,9 +438,13 @@ groupSprites = pygame.sprite.Group()
 
 groupTowers = pygame.sprite.Group()
 
+groupStaticTowers = pygame.sprite.Group()
+
 groupMenuButtons = pygame.sprite.Group()
 
 groupProjectiles = pygame.sprite.Group()
+
+groupPathColliders = pygame.sprite.Group()
 
 def main():
 
@@ -445,6 +482,9 @@ def main():
         # draw the path
         createMapPath(screen)
 
+        # draw collide rects
+        generatePathCollision(screen)
+
         #if health is less than or equal to 0, call looseState()
         if health <= 0:
             looseState(screen)  
@@ -464,7 +504,8 @@ def main():
                     for tower in groupTowers:
                         if tower.rect.collidepoint(event.pos):
                             #set buildmode to false, so the tower stays in place
-                            tower.buildmode = False
+                            if not tower.collision:
+                                tower.buildmode = False
                             #tower.shoot()
                             #getClosestEnemy(tower)
                     for button in groupMenuButtons:
@@ -554,6 +595,31 @@ def createMapPath(screen):
     # not sure if I'll even use this, but it's there
     mainPath.add(groupColliders)
     bossPath.add(groupColliders)
+def generatePathCollision(screen):
+    #https://www.pygame.org/docs/ref/rect.html#pygame.Rect
+
+    # x,y, width, height
+    colRect0 = [0, 600, 1200, 400]
+    colRect1 = [0,510,220,60]
+    colRect2 = [220,310,50,260]
+    colRect3 = [270,310,240,50]
+    colRect4 = [460,360,50,180]
+    colRect5 = [510,480,130,60]
+    colRect6 = [640,10,50,530]
+    colRect7 = [690,10,160,60]
+    colRect8 = [800,70,50,120]
+    colRect9 = [850,140,260,50]
+    colRect10 = [1110,140,60,180]
+    colRect11 = [930,320,240,60]
+    colRect12 = [930,380,50,180]
+    colRect13 = [980,510,220,50]
+
+    # add all colRects to a list
+    colRects = [colRect0, colRect1, colRect2, colRect3, colRect4, colRect5, colRect6, colRect7, colRect8, colRect9, colRect10, colRect11, colRect12, colRect13]
+
+    # create a collider for each colRect, add it to the collision group
+    for i in range(len(colRects)):
+        PathCollider(screen, colRects[i])
 
 def generateBuildingMenu(screen):
     posX = 180
