@@ -124,7 +124,7 @@ class Enemy(pygame.sprite.Sprite):
         self.speed = 5
         self.damage = 2
 
-        self.image = pygame.transform.scale(self.image, (40, 60))
+        self.image = pygame.transform.scale(self.image, (50, 70))
         
         self.rect = self.image.get_rect(center=self.position)
 
