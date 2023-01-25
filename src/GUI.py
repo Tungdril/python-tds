@@ -29,3 +29,28 @@ def gameOver(screen):
     img = pygame.transform.scale(img, (1200, 800))
 
     screen.blit(img, (0, 0))
+
+def win(screen):
+    img = pygame.image.load(path +"/assets/win.png").convert()
+    img = pygame.transform.scale(img, (1200, 800))
+
+    screen.blit(img, (0, 0))
+
+def showPrice(screen, buttonType, location):
+
+    if buttonType == "buttonMg":
+        towerPrice = 100
+    elif buttonType == "buttonSniper":
+        towerPrice = 200
+    elif buttonType == "buttonFlamer":
+        towerPrice = 500
+    elif buttonType == "buttonBarracks":
+        towerPrice = 500
+    elif buttonType == "buttonBank":
+        towerPrice = 1000
+
+    location = (location[0] - 30, location[1] - 40)
+
+    font = pygame.font.SysFont("daytona", 40)
+    text = font.render(str(towerPrice) + "$", True, (255,255,255), (0,0,0))
+    screen.blit(text, location)

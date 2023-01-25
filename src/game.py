@@ -573,7 +573,7 @@ def main():
         for button in groupMenuButtons:
             button.draw()
             if button.rect.collidepoint(pygame.mouse.get_pos()):
-                print(button.type)
+                GUI.showPrice(screen, button.type, pygame.mouse.get_pos())
 
         # draw all projectiles continuously
         for projectile in groupProjectiles:
@@ -697,7 +697,7 @@ def checkPrice(type):
     elif type == "barracks":
         towerPrice = 500
     elif type == "bank":
-        towerPrice = 300
+        towerPrice = 1000
 
     global money
     if towerPrice <= money:
@@ -755,6 +755,13 @@ if __name__ == "__main__":
 #       Main menu + Tutorial
 #       Pause between waves/start wave button
 #       Tutorial
+#       Display tower price
+#       
+#
+#
+#
+#
+#
 #       
 #   TBD:
 #   Hard to implement damage system:
