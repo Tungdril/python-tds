@@ -11,7 +11,6 @@ def read(currentWave):
     lineContents = file.readlines()[currentWave].replace("\n", "")
 
     if lineContents == "end":
-        
         return False
 
     toBeSpawned = []
@@ -24,5 +23,4 @@ def read(currentWave):
 
     # flatten the list, I'm not sure why it's even nested
     flatList = sum(toBeSpawned, [])
-
     return flatList

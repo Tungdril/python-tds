@@ -75,15 +75,15 @@ class Enemy(pygame.sprite.Sprite):
         # loads the image, scales it to 50x50, makes alpha channel transparent
         self.imgPath = os.getcwd() + "/assets/" + type + ".png"
         img = pygame.image.load(self.imgPath).convert_alpha()
-        
-        #prevents the boss from being scaled down, would loose detail otherwise
-        if not type ==  "boss":
-            img = pygame.transform.scale(img, (50, 50))
         self.image = img
 
         # sets waypoints to follow
         self.waypoints = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 490), (645, 20), (805, 20), (805, 145), (1115, 145), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520)]
         
+        # offsets the by 10 pixels, centers the enemy on the path better
+        for i in range(len(self.waypoints)):
+            self.waypoints[i] = (self.waypoints[i][0] - 10, self.waypoints[i][1] - 10)
+
         # duplicates the waypoints for the boss enemy, since it needs to be offset on the y-axis
         self.waypointsBoss = self.waypoints.copy()
         for i in range(len(self.waypointsBoss)):
@@ -96,8 +96,10 @@ class Enemy(pygame.sprite.Sprite):
 
     def spawnLightEnemy(self):
         self.health = 25
-        self.speed = 3.5
+        self.speed = 3.25
         self.damage = 1
+
+        self.image = pygame.transform.scale(self.image, (50, 60))
       
         # draws a rectangle over the image, used for collision detection
         self.rect = self.image.get_rect(center=self.position)
@@ -106,8 +108,12 @@ class Enemy(pygame.sprite.Sprite):
 
     def spawnHeavyEnemy(self):  
         self.health = 100
-        self.speed = 1.5
+        self.speed = 2.25
         self.damage = 5
+
+        self.image = pygame.transform.scale(self.image, (50, 90))
+
+        self.waypoints = self.waypointsBoss
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -118,6 +124,8 @@ class Enemy(pygame.sprite.Sprite):
         self.speed = 5
         self.damage = 2
 
+        self.image = pygame.transform.scale(self.image, (40, 60))
+        
         self.rect = self.image.get_rect(center=self.position)
 
         print("Fast enemy spawned")
@@ -155,7 +163,7 @@ class Enemy(pygame.sprite.Sprite):
         # draws the enemy continuously on screen, kills the enemy if health is below 0
         if self.health <= 0:
             self.killEnemy()
-        groupEnemies.draw(self.screen)
+        self.screen.blit(self.image, self.rect)
 
     def killEnemy(self):
         # removes the enemy from all groups, preventing it from being drawn
@@ -218,7 +226,7 @@ class Tower(pygame.sprite.Sprite):
         # loads the image, scales it to 50x50, makes alpha channel transparent
         self.imgPath = os.getcwd() + "/assets/" + type + ".png"
         img = pygame.image.load(self.imgPath).convert_alpha()
-        img = pygame.transform.scale(img, (100, 100))
+        img = pygame.transform.scale(img, (100, 100))   
         self.image = img
 
         self.buildmode = True
@@ -231,6 +239,8 @@ class Tower(pygame.sprite.Sprite):
         self.range = 150
         self.fireRate = 500
 
+        self.image = pygame.transform.scale(self.image, (110, 80))
+
         self.rect = self.image.get_rect(center=self.position)
     
     def spawnSniperTower(self):
@@ -238,15 +248,16 @@ class Tower(pygame.sprite.Sprite):
         self.range = 300
         self.fireRate = 2000
 
+        self.image = pygame.transform.scale(self.image, (45, 130))
+
         self.rect = self.image.get_rect(center=self.position)
 
         print("Sniper tower spawned")
 
     def spawnFlamerTower(self):
-        self.damage = 0.5
+        self.damage = 1
         self.range = 120
-        self.fireRate = 250
-
+        self.fireRate = 100
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -256,6 +267,8 @@ class Tower(pygame.sprite.Sprite):
         self.damage = 0
         self.range = 100
         self.fireRate = 5000
+
+        self.image = pygame.transform.scale(self.image, (100, 70))
 
         self.rect = self.image.get_rect(center=self.position)
 
@@ -310,7 +323,7 @@ class Tower(pygame.sprite.Sprite):
      
     def draw(self):
         # draws the tower continuously on screen
-        groupTowers.draw(self.screen)
+        self.screen.blit(self.image, self.rect)
 
     def drawRange(self):
         # draws the range of the tower
@@ -326,7 +339,7 @@ class Tower(pygame.sprite.Sprite):
         #if the current time is greater or equal to the last time the tower shot + the fire rate, shoot
         if now - self.last >= self.fireRate and self.buildmode == False and not self.target == None:
             self.last = now
-            Projectile(self.screen, self.rect.center, self.target, "basicBullet", self.damage)
+            Projectile(self.screen, self.rect.center, self.target, (self.type + "Projectile"), self.damage)
         else:
             pass
 
@@ -370,14 +383,14 @@ class Projectile(pygame.sprite.Sprite):
             self.killProjectile()
 
             self.target.health -= self.damage
-            #print("Enemy health:", self.target.health)
+            print("Enemy health:", self.target.health)
 
         # move the projectile towards the target
         self.rect.x += (self.target.x - self.rect.x) / self.speed
         self.rect.y += (self.target.y - self.rect.y) / self.speed
 
     def draw(self):
-        groupProjectiles.draw(self.screen)
+        self.screen.blit(self.image, self.rect)
 
     def killProjectile(self):
         self.kill()
@@ -403,7 +416,6 @@ class MenuButton(pygame.sprite.Sprite):
         groupMenuButtons.add(self)
 
     def draw(self):
-        # self.draw messes with semi-transparent images, so we need to use self.screen.blit, which in turn doesn't work with movement
         self.screen.blit(self.image, self.position)
 
     def buttonPressed(self):
@@ -556,7 +568,7 @@ def main():
         if len(groupEnemies) == 0 and health > 0:
             # check if all waves are done, if so, go to win state
             if currentWave > 9:
-                winState()
+                winState(screen)
             elif health > 0:
                 currentWave += 1
                 #DEBUG, uncomment to spawn enemies
@@ -589,6 +601,9 @@ def createMapPath(screen):
 
     # defines path corners
     points = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 490), (645, 20), (805, 20), (805, 145), (1115, 145), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520), (1250, 900), (-50, 900)]
+
+    for i in range(len(points)):
+            points[i] = (points[i][0] - 10, points[i][1] - 10)
 
     waypointsBoss = points.copy()
     
@@ -732,10 +747,13 @@ def getClosestEnemy(tower):
         return sortedDistances[0][1]
     
 
-def winState():
-    print("You win!")
-    pygame.quit()
-    exit()
+def winState(screen):
+    GUI.win(screen)
+
+    for e in groupSprites:
+        e.kill()
+    #pygame.quit()
+    #exit()
 
 def looseState(screen):
     GUI.gameOver(screen)
@@ -755,7 +773,6 @@ if __name__ == "__main__":
 #       Main menu + Tutorial
 #       Pause between waves/start wave button
 #       Tutorial
-#       Display tower price
 #       
 #
 #

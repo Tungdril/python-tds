@@ -31,7 +31,7 @@ def gameOver(screen):
     screen.blit(img, (0, 0))
 
 def win(screen):
-    img = pygame.image.load(path +"/assets/win.png").convert()
+    img = pygame.image.load(path +"/assets/win.png").convert_alpha()
     img = pygame.transform.scale(img, (1200, 800))
 
     screen.blit(img, (0, 0))
