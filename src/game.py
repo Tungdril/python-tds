@@ -352,7 +352,7 @@ class Projectile(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         self.screen = screen
-        self.position = position
+        self.position = self.getProjectileOffset(position, type)
         self.target = target
         self.type = type
         self.damage = damage
@@ -391,6 +391,19 @@ class Projectile(pygame.sprite.Sprite):
 
     def draw(self):
         self.screen.blit(self.image, self.rect)
+
+    def getProjectileOffset(self, position, type):
+        # get the offset position of the projectile, so it spawns at the correct position
+        if type == "mgProjectile":
+            offsetPosition = (position[0], position[1] - 30)
+        elif type == "sniperProjectile":
+            offsetPosition = (position[0] - 5, position[1] - 60)
+        elif type == "flamerProjectile":
+            offsetPosition = (position[0], position[1])
+        else:
+            offsetPosition = position
+
+        return offsetPosition
 
     def killProjectile(self):
         self.kill()
@@ -553,16 +566,6 @@ def main():
             if consoleActive:
                 print(event)
 
-        # draw, move all enemies continuously
-        for enemy in groupEnemies:
-            enemy.draw()
-            enemy.move()
-
-        # draw tower range if mouse hovers over tower
-        for tower in groupStaticTowers:
-            if tower.rect.collidepoint(pygame.mouse.get_pos()):
-                tower.drawRange()
-
         # check if all enemies are dead, if so, spawn new wave, only if health is above 0
         #DEBUG, set back to 0!
         if len(groupEnemies) == 0 and health > 0:
@@ -580,6 +583,17 @@ def main():
             tower.move()
             tower.draw()
             tower.shoot()
+
+        # draw, move all enemies continuously
+        for enemy in groupEnemies:
+            enemy.draw()
+            enemy.move()
+            
+        # draw tower range if mouse hovers over tower
+        for tower in groupStaticTowers:
+            if tower.rect.collidepoint(pygame.mouse.get_pos()):
+                tower.drawRange()
+                GUI.showResellValue(screen, tower, pygame.mouse.get_pos())
 
         # draw all menu buttons continuously
         for button in groupMenuButtons:

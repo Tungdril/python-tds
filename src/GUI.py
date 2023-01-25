@@ -54,3 +54,11 @@ def showPrice(screen, buttonType, location):
     font = pygame.font.SysFont("daytona", 40)
     text = font.render(str(towerPrice) + "$", True, (255,255,255), (0,0,0))
     screen.blit(text, location)
+
+def showResellValue(screen, tower, location):
+    resellPrice = int(tower.price * 0.25)
+    location = (location[0] - 20, location[1] - 40)
+
+    font = pygame.font.SysFont("daytona", 40)
+    text = font.render(str(resellPrice) + "$", True, (255,255,255), (0,0,0))
+    screen.blit(text, location)
