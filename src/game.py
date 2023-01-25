@@ -228,14 +228,14 @@ class Tower(pygame.sprite.Sprite):
 
     def spawnMgTower(self):
         self.damage = 2
-        self.range = 100
+        self.range = 150
         self.fireRate = 500
 
         self.rect = self.image.get_rect(center=self.position)
     
     def spawnSniperTower(self):
         self.damage = 10
-        self.range = 200
+        self.range = 300
         self.fireRate = 2000
 
         self.rect = self.image.get_rect(center=self.position)
@@ -244,7 +244,7 @@ class Tower(pygame.sprite.Sprite):
 
     def spawnFlamerTower(self):
         self.damage = 0.5
-        self.range = 50
+        self.range = 120
         self.fireRate = 250
 
 
@@ -289,8 +289,6 @@ class Tower(pygame.sprite.Sprite):
     
     def move(self):
 
-        
-
         # moves the tower along with the mouse
         if self.buildmode:
 
@@ -300,13 +298,9 @@ class Tower(pygame.sprite.Sprite):
             if collision:
                 #draws a circle around the tower to show the range, red if colliding with path, green if not
                 pygame.draw.circle(self.screen, (255, 0, 0), self.rect.center, self.range, 3)
-
                 self.collision = True
-                print("collision")
             else:
                 pygame.draw.circle(self.screen, (0, 255, 0), self.rect.center, self.range, 3)
-
-                print("no collision")
                 self.collision = False
         else:
             #set own position to the center of the rect, stops update from moving the tower
@@ -318,6 +312,10 @@ class Tower(pygame.sprite.Sprite):
         # draws the tower continuously on screen
         groupTowers.draw(self.screen)
 
+    def drawRange(self):
+        # draws the range of the tower
+        pygame.draw.circle(self.screen, (0, 255, 0), self.rect.center, self.range, 3)
+
     def shoot(self):
         # shoots a projectile towards the closest enemy
         self.target = getClosestEnemy(self)
@@ -326,9 +324,11 @@ class Tower(pygame.sprite.Sprite):
         now = pygame.time.get_ticks()
 
         #if the current time is greater or equal to the last time the tower shot + the fire rate, shoot
-        if now - self.last >= self.fireRate and self.buildmode == False:
+        if now - self.last >= self.fireRate and self.buildmode == False and not self.target == None:
             self.last = now
             Projectile(self.screen, self.rect.center, self.target, "basicBullet", self.damage)
+        else:
+            pass
 
     def killTower(self):
         self.kill()
@@ -546,6 +546,11 @@ def main():
             enemy.draw()
             enemy.move()
 
+        # draw tower range if mouse hovers over tower
+        for tower in groupStaticTowers:
+            if tower.rect.collidepoint(pygame.mouse.get_pos()):
+                tower.drawRange()
+
         # check if all enemies are dead, if so, spawn new wave, only if health is above 0
         #DEBUG, set back to 0!
         if len(groupEnemies) == 0 and health > 0:
@@ -567,6 +572,8 @@ def main():
         # draw all menu buttons continuously
         for button in groupMenuButtons:
             button.draw()
+            if button.rect.collidepoint(pygame.mouse.get_pos()):
+                print(button.type)
 
         # draw all projectiles continuously
         for projectile in groupProjectiles:
@@ -596,9 +603,9 @@ def createMapPath(screen):
     mainPath.add(groupColliders)
     bossPath.add(groupColliders)
 def generatePathCollision(screen):
-    #https://www.pygame.org/docs/ref/rect.html#pygame.Rect
 
-    # x,y, width, height
+    # it's easiest to define a bunch of rects and then draw them, polygonal collison is kinda hard
+    # x,y, width, height, 
     colRect0 = [0, 600, 1200, 400]
     colRect1 = [0,510,220,60]
     colRect2 = [220,310,50,260]
@@ -676,7 +683,6 @@ def buildTower(screen, type):
         global money
         money -= towerPrice
 
-        #TODO: check if tower can be placed, if not, change color
         Tower(screen, position, type, towerPrice)
 
 def checkPrice(type):
@@ -695,7 +701,6 @@ def checkPrice(type):
 
     global money
     if towerPrice <= money:
-        print("after if", money)
         return towerPrice
     else:
         print("Not enough money!")
@@ -716,11 +721,16 @@ def getClosestEnemy(tower):
     # sort the list by the distance, key gets the first item in the list (distance)
     sortedDistances = sorted(distances, key=lambda x: x[0])
 
-    # DEBUGINFO
-    #print(sortedDistances)
-    #print(sortedDistances[0][1])
-
-    return sortedDistances[0][1]
+    # check if the closest enemy is in range, if not, return None, added 20px to the range to compensate for hitbox size
+    if sortedDistances[0][0] > (tower.range + 20):
+        #print("No enemies in range!")
+        return None
+    else:
+        # DEBUGINFO
+        #print(sortedDistances)
+        #print(sortedDistances[0][0])
+        return sortedDistances[0][1]
+    
 
 def winState():
     print("You win!")
@@ -740,13 +750,6 @@ def looseState(screen):
 if __name__ == "__main__":
     main()
 
-#   TOWERS:
-#       Projectiles/Actual damage
-#       Tower Upgrades
-#       Tower Range
-#       Towers can't intersect with each other and path
-#       Change color in buildmode/intersection   
-#
 #   GUI/GAMEPLAY:
 #       Retry button
 #       Main menu + Tutorial
@@ -756,7 +759,6 @@ if __name__ == "__main__":
 #   TBD:
 #   Hard to implement damage system:
 #       Barracks or different tower? (Minefield)
-#       Flamer or different tower? (Cannon)
 #
 #   SOUND:
 #       Tower shooting
