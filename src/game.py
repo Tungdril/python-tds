@@ -744,23 +744,22 @@ def getClosestEnemy(tower):
         # get the distance between the enemy and the tower
         distance = math.hypot(enemy.rect.x - tower.rect.x, enemy.rect.y - tower.rect.y)
 
-        # add the distance and enemy instance to the list
-        distances.append([distance, enemy])
+        # add all distances to a list, if the enemy is in range of the tower, add 20 px to compensate for the hitbox
+        if distance <= (tower.range + 20):
+            distances.append([distance, enemy])
 
     # sort the list by the distance, key gets the first item in the list (distance)
     sortedDistances = sorted(distances, key=lambda x: x[0])
 
-    # check if the closest enemy is in range, if not, return None, added 20px to the range to compensate for hitbox size
-    if sortedDistances[0][0] > (tower.range + 20):
+    if len(sortedDistances) == 0:
         #print("No enemies in range!")
         return None
-    else:
+    elif len(sortedDistances) > 0: 
         # DEBUGINFO
         #print(sortedDistances)
         #print(sortedDistances[0][0])
         return sortedDistances[0][1]
     
-
 def winState(screen):
     GUI.win(screen)
 
@@ -788,12 +787,6 @@ if __name__ == "__main__":
 #       Pause between waves/start wave button
 #       Tutorial
 #       
-#
-#
-#
-#
-#
-#       
 #   TBD:
 #   Hard to implement damage system:
 #       Barracks or different tower? (Minefield)
@@ -820,8 +813,7 @@ if __name__ == "__main__":
 #       Projectile hitting enemy
 #
 #   GRAPHICS:
-#       Towers including different upgrades
-#       Enemies 
+#       Towers
 #       Projectiles
 #       GUI
 #       Icons: Money, Health, Wave, Tower, Sell, Upgrade, Start Wave, Window favicon

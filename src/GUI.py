@@ -10,17 +10,17 @@ def background(screen):
     screen.blit(img, (0, 0))
 
 def wave(screen, wave):
-    font = pygame.font.SysFont("daytona", 40)
+    font = pygame.font.Font(path + "/assets/DaytonaPro-Semibold.ttf", 30)
     text = font.render("Wave: " + str(wave) + "/10", True, (0,0,0))
     screen.blit(text, (10, 10))
 
 def health(screen, health):
-    font = pygame.font.SysFont("daytona", 40)
+    font = pygame.font.Font(path + "/assets/DaytonaPro-Semibold.ttf", 30)
     text = font.render("Health: " + str(health), True, (0,0,0))
     screen.blit(text, (10, 40))
 
 def money(screen, money):
-    font = pygame.font.SysFont("daytona", 40)
+    font = pygame.font.Font(path + "/assets/DaytonaPro-Semibold.ttf", 30)
     text = font.render("Money: " + str(money) + "$", True, (0,0,0))
     screen.blit(text, (10, 760))
 
@@ -51,7 +51,7 @@ def showPrice(screen, buttonType, location):
 
     location = (location[0] - 30, location[1] - 40)
 
-    font = pygame.font.SysFont("daytona", 40)
+    font = pygame.font.Font(path + "/assets/DaytonaPro-Semibold.ttf", 30)
     text = font.render(str(towerPrice) + "$", True, (255,255,255), (0,0,0))
     screen.blit(text, location)
 
@@ -59,6 +59,6 @@ def showResellValue(screen, tower, location):
     resellPrice = int(tower.price * 0.25)
     location = (location[0] - 20, location[1] - 40)
 
-    font = pygame.font.SysFont("daytona", 40)
+    font = pygame.font.Font(path + "/assets/DaytonaPro-Semibold.ttf", 30)
     text = font.render(str(resellPrice) + "$", True, (255,255,255), (0,0,0))
     screen.blit(text, location)
