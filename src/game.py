@@ -38,7 +38,7 @@ currentWave = 1
 
 health = 100
 
-money = 1000
+money = 5000
 
 # class definitions
 class Path(pygame.sprite.Sprite):
@@ -225,8 +225,7 @@ class Tower(pygame.sprite.Sprite):
 
         # loads the image, scales it to 50x50, makes alpha channel transparent
         self.imgPath = os.getcwd() + "/assets/" + type + ".png"
-        img = pygame.image.load(self.imgPath).convert_alpha()
-        img = pygame.transform.scale(img, (100, 100))   
+        img = pygame.image.load(self.imgPath).convert_alpha()  
         self.image = img
 
         self.buildmode = True
@@ -277,7 +276,9 @@ class Tower(pygame.sprite.Sprite):
     def spawnBankTower(self):
         self.damage = 0
         self.fireRate = 10000
-        self.range = 60
+        self.range = 80
+
+        self.image = pygame.transform.scale(self.image, (180, 120))
 
         self.rect = self.image.get_rect(center=self.position)
         
@@ -301,7 +302,6 @@ class Tower(pygame.sprite.Sprite):
         groupSprites.add(self)
     
     def move(self):
-
         # moves the tower along with the mouse
         if self.buildmode:
 
@@ -309,11 +309,11 @@ class Tower(pygame.sprite.Sprite):
             collision = pygame.sprite.spritecollide(self, groupPathColliders, False) or pygame.sprite.spritecollide(self, groupStaticTowers, False)
 
             if collision:
-                #draws a circle around the tower to show the range, red if colliding with path, green if not
-                pygame.draw.circle(self.screen, (255, 0, 0), self.rect.center, self.range, 3)
+                #draws a circle/rect around the tower to show the range, red if colliding with path, green if not
+                self.drawRange((255, 0, 0))
                 self.collision = True
             else:
-                pygame.draw.circle(self.screen, (0, 255, 0), self.rect.center, self.range, 3)
+                self.drawRange((0, 255, 0))
                 self.collision = False
         else:
             #set own position to the center of the rect, stops update from moving the tower
@@ -325,9 +325,16 @@ class Tower(pygame.sprite.Sprite):
         # draws the tower continuously on screen
         self.screen.blit(self.image, self.rect)
 
-    def drawRange(self):
-        # draws the range of the tower
-        pygame.draw.circle(self.screen, (0, 255, 0), self.rect.center, self.range, 3)
+    def drawRange(self, color):
+        # increases rect size to encompass the entire sprite
+        rect = self.rect[0] - 5, self.rect[1] - 10, self.rect[2] + 10, self.rect[3] + 20
+
+        # draws the range of the tower, draw rects for bank, draw circle for other towers
+        if self.type == "bank":
+            pygame.draw.rect(self.screen, color, rect, 3, 10)
+            return
+        else:
+            pygame.draw.circle(self.screen, color, self.rect.center, self.range, 3)
 
     def shoot(self):
         # shoots a projectile towards the closest enemy
@@ -450,6 +457,8 @@ class MenuButton(pygame.sprite.Sprite):
 
 # initialize pygame
 pygame.init()
+
+GUI.init()
 
 # set a clock, used for framerate
 clock = pygame.time.Clock()
@@ -592,7 +601,7 @@ def main():
         # draw tower range if mouse hovers over tower
         for tower in groupStaticTowers:
             if tower.rect.collidepoint(pygame.mouse.get_pos()):
-                tower.drawRange()
+                tower.drawRange((0, 255, 0))
                 GUI.showResellValue(screen, tower, pygame.mouse.get_pos())
 
         # draw all menu buttons continuously
@@ -786,6 +795,7 @@ if __name__ == "__main__":
 #       Main menu + Tutorial
 #       Pause between waves/start wave button
 #       Tutorial
+#       Implement bank, wave/kill money
 #       
 #   TBD:
 #   Hard to implement damage system:
