@@ -7,6 +7,7 @@ import GUI
 import readWaves
 import os
 import math
+import random
 
 try:
     import pygame # check if pygame is installed, import if it is
@@ -298,7 +299,7 @@ class Tower(pygame.sprite.Sprite):
         else:
             print("Invalid tower type")
 
-        groupTowers.add(self)
+        groupBuildingTowers.add(self)
         groupSprites.add(self)
     
     def move(self):
@@ -319,7 +320,6 @@ class Tower(pygame.sprite.Sprite):
             #set own position to the center of the rect, stops update from moving the tower
             self.collision = False
             self.position = self.rect.center
-            self.add(groupStaticTowers)
      
     def draw(self):
         # draws the tower continuously on screen
@@ -350,7 +350,14 @@ class Tower(pygame.sprite.Sprite):
         else:
             pass
 
-    def killTower(self):
+    def killTower(self, fullRefund):
+
+        # if fullRefund is true, refund the full price of the tower
+        if fullRefund:
+            global money
+            money += self.price
+            print("Tower", self.type, "killed, full refund")
+            
         self.kill()
         print("Tower", self.type, "killed")
 
@@ -368,7 +375,11 @@ class Projectile(pygame.sprite.Sprite):
         target.x = target.rect.x + 25
         target.y = target.rect.y + 25   
 
-        self.imgPath = os.getcwd() + "/assets/" + type + ".png"
+        if self.type != "sniperProjectile":
+            self.imgPath = os.getcwd() + "/assets/" + type + ".png"
+        else:
+            self.imgPath = self.getRandSniperProjectile()
+        
         img = pygame.image.load(self.imgPath).convert_alpha()
         img = pygame.transform.scale(img, (25, 25))
         self.image = img
@@ -412,6 +423,13 @@ class Projectile(pygame.sprite.Sprite):
 
         return offsetPosition
 
+    def getRandSniperProjectile(self):
+        # get a random sniper projectile
+        rand = random.randint(0, 13)
+
+        img = os.getcwd() + "/assets/" + self.type + str(rand) + ".png"
+        return img
+
     def killProjectile(self):
         self.kill()
 
@@ -439,6 +457,11 @@ class MenuButton(pygame.sprite.Sprite):
         self.screen.blit(self.image, self.position)
 
     def buttonPressed(self):
+
+        if groupBuildingTowers.sprites() != []:
+            # if there is a tower being built, kill it so the player can build a new one
+            groupBuildingTowers.sprites()[0].killTower(fullRefund=True)
+
         # depending on the button type pressed, build a tower
         if self.type == "buttonMg":
             buildTower(self.screen, "mg")
@@ -470,7 +493,7 @@ groupEnemies = pygame.sprite.Group()
 
 groupSprites = pygame.sprite.Group()
 
-groupTowers = pygame.sprite.Group()
+groupBuildingTowers = pygame.sprite.Group()
 
 groupStaticTowers = pygame.sprite.Group()
 
@@ -485,7 +508,7 @@ def main():
     # deactivates console by default
     consoleActive = False
 
-    pygame.display.set_caption("Python TDS") # set the window title
+    pygame.display.set_caption("Novus ordo seclorum") # set the window title
     screen = pygame.display.set_mode((1200, 800)) # create a window 
 
     # spawn all enemies DEBUG
@@ -535,22 +558,29 @@ def main():
                     for enemy in groupEnemies:
                         if enemy.rect.collidepoint(event.pos):
                             enemy.killEnemy()
-                    for tower in groupTowers:
+                    for tower in groupBuildingTowers:
                         if tower.rect.collidepoint(event.pos):
                             #set buildmode to false, so the tower stays in place
                             if not tower.collision:
                                 tower.buildmode = False
-                            #tower.shoot()
-                            #getClosestEnemy(tower)
+                                #remove the tower from the building group and add it to the static group
+                                groupBuildingTowers.remove(tower)
+                                groupStaticTowers.add(tower)
                     for button in groupMenuButtons:
-                        if button.rect.collidepoint(event.pos):
-                            button.buttonPressed()
+                            if button.rect.collidepoint(event.pos):
+                                button.buttonPressed()
+
                 # if right mouse button is clicked
                 elif event.button == 3:
-                    for tower in groupTowers:
+                    # refund 25% of the tower's price if it is right clicked
+                    for tower in groupStaticTowers:
                         if tower.rect.collidepoint(event.pos):
                             money += int(tower.price * 0.25)
-                            tower.killTower()
+                            tower.killTower(fullRefund=False)
+                    # kill the tower if it is right clicked while being built, full refund
+                    for tower in groupBuildingTowers:
+                        if tower.rect.collidepoint(event.pos):
+                            tower.killTower(fullRefund=True)
 
             # check if a key has been pressed
             if event.type == pygame.KEYDOWN:
@@ -586,30 +616,34 @@ def main():
                 #DEBUG, uncomment to spawn enemies
                 spawnEnemy(screen)
 
-        # draw, move all towers continuously
-        for tower in groupTowers:
+        # draw all static towers continuously, and shoot if possible
+        for tower in groupStaticTowers:
+            tower.draw()
+            tower.move()
+            tower.shoot()
+
+            #draw tower range if mouse hovers over tower
+            if tower.rect.collidepoint(pygame.mouse.get_pos()):
+                tower.drawRange((0, 255, 0))
+                GUI.showResellValue(screen, tower, pygame.mouse.get_pos())
+
+        # draw, move all towers in buildmode continuously
+        for tower in groupBuildingTowers:
             tower.rect.move(pygame.mouse.get_pos())
             tower.move()
             tower.draw()
-            tower.shoot()
-
+            
         # draw, move all enemies continuously
         for enemy in groupEnemies:
             enemy.draw()
             enemy.move()
-            
-        # draw tower range if mouse hovers over tower
-        for tower in groupStaticTowers:
-            if tower.rect.collidepoint(pygame.mouse.get_pos()):
-                tower.drawRange((0, 255, 0))
-                GUI.showResellValue(screen, tower, pygame.mouse.get_pos())
 
         # draw all menu buttons continuously
         for button in groupMenuButtons:
             button.draw()
             if button.rect.collidepoint(pygame.mouse.get_pos()):
                 GUI.showPrice(screen, button.type, pygame.mouse.get_pos())
-
+            
         # draw all projectiles continuously
         for projectile in groupProjectiles:
             projectile.draw()
@@ -633,7 +667,7 @@ def createMapPath(screen):
     for i in range(len(waypointsBoss)):
         waypointsBoss[i] = (waypointsBoss[i][0], waypointsBoss[i][1]-30)
 
-    # gives a visuel representation of the paths for debugging
+    # gives a visual representation of the paths for debugging
     mainPath = Path(screen, (255, 0, 0), points, 2)
     bossPath = Path(screen, (0, 255, 0), waypointsBoss, 2)
 
@@ -772,16 +806,16 @@ def getClosestEnemy(tower):
 def winState(screen):
     GUI.win(screen)
 
-    for e in groupSprites:
-        e.kill()
+    for sprite in groupSprites:
+        sprite.kill()
     #pygame.quit()
     #exit()
 
 def looseState(screen):
     GUI.gameOver(screen)
 
-    for e in groupSprites:
-        e.kill()
+    for sprite in groupSprites:
+        sprite.kill()
     #print("You loose!")
     #pygame.quit()
     #exit()
