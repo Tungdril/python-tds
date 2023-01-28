@@ -23,8 +23,8 @@ def health(screen, health):
     screen.blit(text, (10, 40))
 
 def money(screen, money):
-    text = font.render("Money: " + str(money) + "$", True, (0,0,0))
-    screen.blit(text, (10, 760))
+    text = font.render(str(money) + "$", True, (0,0,0))
+    screen.blit(text, (1080, 10))
 
 def gameOver(screen):
     img = pygame.image.load(path +"/assets/game_over.png").convert()

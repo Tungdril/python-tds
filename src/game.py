@@ -74,7 +74,7 @@ class Enemy(pygame.sprite.Sprite):
         self.type = type
 
         # loads the image, scales it to 50x50, makes alpha channel transparent
-        self.imgPath = os.getcwd() + "/assets/" + type + ".png"
+        self.imgPath = os.getcwd() + "/assets/enemies/" + type + ".png"
         img = pygame.image.load(self.imgPath).convert_alpha()
         self.image = img
 
@@ -229,7 +229,7 @@ class Tower(pygame.sprite.Sprite):
         self.price = price
 
         # loads the image, scales it to 50x50, makes alpha channel transparent
-        self.imgPath = os.getcwd() + "/assets/" + type + ".png"
+        self.imgPath = os.getcwd() + "/assets/towers/" + type + ".png"
         img = pygame.image.load(self.imgPath).convert_alpha()  
         self.image = img
 
@@ -382,7 +382,7 @@ class Projectile(pygame.sprite.Sprite):
         target.y = target.rect.y + 25   
 
         if self.type != "sniperProjectile":
-            self.imgPath = os.getcwd() + "/assets/" + type + ".png"
+            self.imgPath = os.getcwd() + "/assets/projectiles/" + type + ".png"
         else:
             self.imgPath = self.getRandSniperProjectile()
         
@@ -407,7 +407,6 @@ class Projectile(pygame.sprite.Sprite):
             self.killProjectile()
 
             self.target.health -= self.damage
-            print("Enemy health:", self.target.health)
 
         # move the projectile towards the target
         self.rect.x += (self.target.x - self.rect.x) / self.speed
@@ -433,7 +432,7 @@ class Projectile(pygame.sprite.Sprite):
         # get a random sniper projectile
         rand = random.randint(0, 13)
 
-        img = os.getcwd() + "/assets/" + self.type + str(rand) + ".png"
+        img = os.getcwd() + "/assets/projectiles/" + self.type + str(rand) + ".png"
         return img
 
     def killProjectile(self):
@@ -443,7 +442,7 @@ class MenuButton(pygame.sprite.Sprite):
     def __init__(self, screen, buttonType, position):
         pygame.sprite.Sprite.__init__(self)
 
-        img = pygame.image.load(os.getcwd() +"/assets/" + buttonType + ".png").convert_alpha()
+        img = pygame.image.load(os.getcwd() +"/assets/buttons/" + buttonType + ".png").convert_alpha()
         img = pygame.transform.scale(img, (100, 100))
         self.image = img
 
@@ -514,8 +513,11 @@ def main():
     # deactivates console by default
     consoleActive = False
 
-    pygame.display.set_caption("Novus ordo seclorum") # set the window title
+    pygame.display.set_caption("Novus Ordo Seclorum") # set the window title
     screen = pygame.display.set_mode((1200, 800)) # create a window 
+
+    icon = pygame.image.load(os.getcwd() + "/assets/icon.png")
+    pygame.display.set_icon(icon)
 
     # spawn all enemies DEBUG
     spawnEnemy(screen)
@@ -524,10 +526,13 @@ def main():
     generateBuildingMenu(screen)
 
     # main loop 
-    while True:
+    while 1:
 
         # set framerate
-        clock.tick(30)
+        clock.tick(60)
+
+        fps = clock.get_fps()
+        print(fps)
 
         # draw the background
         GUI.background(screen)
@@ -681,6 +686,7 @@ def createMapPath(screen):
     # not sure if I'll even use this, but it's there
     mainPath.add(groupColliders)
     bossPath.add(groupColliders)
+    
 def generatePathCollision(screen):
 
     # it's easiest to define a bunch of rects and then draw them, polygonal collison is kinda hard
