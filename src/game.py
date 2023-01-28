@@ -259,6 +259,8 @@ class Tower(pygame.sprite.Sprite):
         self.range = 120
         self.fireRate = 100
 
+        self.image = pygame.transform.scale(self.image, (80, 80))
+
         self.rect = self.image.get_rect(center=self.position)
 
         print("Flamer tower spawned")
