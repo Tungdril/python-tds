@@ -97,6 +97,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def spawnLightEnemy(self):
         self.health = 25
+        self.maxHealth = self.health
         self.speed = 3.25
         self.damage = 1
 
@@ -109,6 +110,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def spawnHeavyEnemy(self):  
         self.health = 100
+        self.maxHealth = self.health
         self.speed = 2.25
         self.damage = 5
 
@@ -122,6 +124,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def spawnFastEnemy(self):  
         self.health = 50
+        self.maxHealth = self.health
         self.speed = 5
         self.damage = 2
 
@@ -133,6 +136,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def spawnBossEnemy(self):
         self.health = 500
+        self.maxHealth = self.health
         self.speed = 1
         self.damage = 100
         self.image = pygame.transform.scale(self.image, (52, 80))
@@ -639,6 +643,7 @@ def main():
         for enemy in groupEnemies:
             enemy.draw()
             enemy.move()
+            GUI.healthBar(screen, enemy.health, enemy.maxHealth, (enemy.rect.x, enemy.rect.y), enemy.image, enemy.type)
 
         # draw all menu buttons continuously
         for button in groupMenuButtons:
