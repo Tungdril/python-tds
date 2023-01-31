@@ -40,7 +40,7 @@ currentWave = 1
 
 health = 100
 
-money = 5000
+money = 0
 
 # class definitions
 class Path(pygame.sprite.Sprite):
@@ -117,6 +117,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.image = pygame.transform.scale(self.image, (50, 90))
 
+        # because of its size, this needs to use the boss waypoints
         self.waypoints = self.waypointsBoss
 
         self.rect = self.image.get_rect(center=self.position)
@@ -162,14 +163,20 @@ class Enemy(pygame.sprite.Sprite):
         # after spawning the enemy, add it to the groupEnemies group
         groupEnemies.add(self)
         groupSprites.add(self)
-        #DEBUGINFO
-        print("Current enemies:", len(groupEnemies.sprites()))
 
     def draw(self):
         # draws the enemy continuously on screen, kills the enemy if health is below 0
         if self.health <= 0:
             self.killEnemy()
+            self.calculateReward()
         self.screen.blit(self.image, self.rect)
+
+    def calculateReward(self):
+        # adds a random amount of money to the player's wallet
+        reward = random.randint(2, 15)
+
+        global money
+        money += reward
 
     def killEnemy(self):
         # removes the enemy from all groups, preventing it from being drawn
@@ -177,11 +184,6 @@ class Enemy(pygame.sprite.Sprite):
         print("Enemy", self.type, "killed")
 
     def move(self):
-
-        # if the enemy is the boss, use the boss waypoints
-        if self.type == "boss":
-            self.waypoints = self.waypointsBoss
-
         # moves the enemy along a predefined path
         # if own position on x-axis is less than target position, increment x-axis by speed
         if self.rect.x < self.waypoints[self.waypointsIndex][0]:
@@ -247,6 +249,8 @@ class Tower(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (110, 80))
 
         self.rect = self.image.get_rect(center=self.position)
+
+        print("Bank tower spawned")
     
     def spawnSniperTower(self):
         self.damage = 10
@@ -290,7 +294,7 @@ class Tower(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(center=self.position)
         
-        print("Barracks tower spawned")
+        print("Bank tower spawned")
     
     def determineType(self):    
         if self.type == "mg":
@@ -540,6 +544,17 @@ def main():
         # draw the background
         GUI.background(screen)
 
+        # draw all static towers continuously, and shoot if possible, load first to avoid draw order issues
+        for tower in groupStaticTowers:
+            tower.draw()
+            tower.move()
+            tower.shoot()
+
+            #draw tower range if mouse hovers over tower
+            if tower.rect.collidepoint(pygame.mouse.get_pos()):
+                tower.drawRange((0, 255, 0))
+                GUI.showResellValue(screen, tower, pygame.mouse.get_pos())
+
         # yeah I know globals are bad practice, but this is easiest and practical enough
         global currentWave
         GUI.wave(screen, currentWave)
@@ -625,26 +640,19 @@ def main():
                 print(event)
 
         # check if all enemies are dead, if so, spawn new wave, only if health is above 0
-        #DEBUG, set back to 0!
         if len(groupEnemies) == 0 and health > 0:
             # check if all waves are done, if so, go to win state
             if currentWave > 9:
                 winState(screen)
             elif health > 0:
                 currentWave += 1
-                #DEBUG, uncomment to spawn enemies
+
+                # reward player for clearing a wave
+                waveReward = 50 * currentWave
+                money += waveReward
+                print("Wave " + str(currentWave) + " cleared, reward: " + str(waveReward))
+
                 spawnEnemy(screen)
-
-        # draw all static towers continuously, and shoot if possible
-        for tower in groupStaticTowers:
-            tower.draw()
-            tower.move()
-            tower.shoot()
-
-            #draw tower range if mouse hovers over tower
-            if tower.rect.collidepoint(pygame.mouse.get_pos()):
-                tower.drawRange((0, 255, 0))
-                GUI.showResellValue(screen, tower, pygame.mouse.get_pos())
 
         # draw, move all towers in buildmode continuously
         for tower in groupBuildingTowers:
