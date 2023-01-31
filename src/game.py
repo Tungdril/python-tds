@@ -4,6 +4,7 @@
 # import all the modules
 
 import GUI
+
 import readWaves
 import os
 import math
@@ -486,8 +487,6 @@ class MenuButton(pygame.sprite.Sprite):
 # initialize pygame
 pygame.init()
 
-GUI.init()
-
 # set a clock, used for framerate
 clock = pygame.time.Clock()
 
@@ -519,20 +518,24 @@ def main():
     icon = pygame.image.load(os.getcwd() + "/assets/icon.png")
     pygame.display.set_icon(icon)
 
+    # initialize the GUI, needs to be done after the screen is created
+    GUI.init()
+
     # spawn all enemies DEBUG
     spawnEnemy(screen)
 
     # draw the build menu
     generateBuildingMenu(screen)
 
-    # main loop 
+    # main loop
     while 1:
 
-        # set framerate
-        clock.tick(60)
+        # set framerate, time is not normalized, so speed is affected by framerate
+        clock.tick(30)
 
+        # DEBUGINFO
         fps = clock.get_fps()
-        print(fps)
+        fps = int(fps * 100) / 100
 
         # draw the background
         GUI.background(screen)
@@ -546,6 +549,11 @@ def main():
 
         global money
         GUI.money(screen, money)
+
+        # DEBUGINFO
+        font = pygame.font.SysFont("Arial", 40)
+        fps_display = font.render(str(fps), True, (255, 0, 0))
+        screen.blit(fps_display, (1100, 760))
 
         # draw the path
         createMapPath(screen)
