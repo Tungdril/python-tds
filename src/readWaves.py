@@ -2,7 +2,7 @@ import os
 
 def read(currentWave):
 
-    path = os.getcwd() + "/assets/waves.txt"
+    path = os.getcwd() + "/assets/waves.csv"
 
     # open the file
     file = open(path, "r")

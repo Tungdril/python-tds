@@ -40,7 +40,7 @@ currentWave = 1
 
 health = 100
 
-money = 0
+money = 10000
 
 # class definitions
 class Path(pygame.sprite.Sprite):
@@ -53,7 +53,6 @@ class Path(pygame.sprite.Sprite):
 
 class PathCollider(pygame.sprite.Sprite):
     def __init__(self, screen, rect):
-        # calls constructor of parent class
         pygame.sprite.Sprite.__init__(self)
 
         # neccessary for collision detection
@@ -66,7 +65,6 @@ class PathCollider(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, screen, position, type):
-        # calls constructor of parent class
         pygame.sprite.Sprite.__init__(self)
 
         # initializes screen, position and type
@@ -82,11 +80,11 @@ class Enemy(pygame.sprite.Sprite):
         # sets waypoints to follow
         self.waypoints = [(-50, 530), (225, 530), (225, 325), (460, 325), (460, 490), (645, 490), (645, 20), (805, 20), (805, 145), (1115, 145), (1115, 335), (935, 335), (935, 520), (1200, 520), (1250,520)]
         
-        # offsets the by 10 pixels, centers the enemy on the path better
+        # offsets by 10 pixels, centers the enemy on the path better
         for i in range(len(self.waypoints)):
             self.waypoints[i] = (self.waypoints[i][0] - 10, self.waypoints[i][1] - 10)
 
-        # duplicates the waypoints for the boss enemy, since it needs to be offset on the y-axis
+        # duplicates the waypoints for the boss/heavy enemy, since they need to be offset on the y-axis
         self.waypointsBoss = self.waypoints.copy()
         for i in range(len(self.waypointsBoss)):
             self.waypointsBoss[i] = (self.waypointsBoss[i][0], self.waypointsBoss[i][1] -30)
@@ -143,6 +141,7 @@ class Enemy(pygame.sprite.Sprite):
         self.damage = 100
         self.image = pygame.transform.scale(self.image, (52, 80))
 
+        # use the boss waypoints
         self.waypoints = self.waypointsBoss
 
         self.rect = self.image.get_rect(center=self.position)
@@ -277,7 +276,7 @@ class Tower(pygame.sprite.Sprite):
     def spawnBarracksTower(self):
         self.damage = 0
         self.range = 100
-        self.fireRate = 5000
+        self.fireRate = 1000
 
         self.image = pygame.transform.scale(self.image, (100, 70))
 
@@ -286,8 +285,8 @@ class Tower(pygame.sprite.Sprite):
         print("Barracks tower spawned")
 
     def spawnBankTower(self):
-        self.damage = 0
-        self.fireRate = 10000
+        self.damage = random.randint(10, 50)
+        self.fireRate = 5000
         self.range = 80
 
         self.image = pygame.transform.scale(self.image, (180, 120))
@@ -321,14 +320,14 @@ class Tower(pygame.sprite.Sprite):
             collision = pygame.sprite.spritecollide(self, groupPathColliders, False) or pygame.sprite.spritecollide(self, groupStaticTowers, False)
 
             if collision:
-                #draws a circle/rect around the tower to show the range, red if colliding with path, green if not
+                # draws a circle/rect around the tower to show the range, red if colliding with path, green if not
                 self.drawRange((255, 0, 0))
                 self.collision = True
             else:
                 self.drawRange((0, 255, 0))
                 self.collision = False
         else:
-            #set own position to the center of the rect, stops update from moving the tower
+            # set own position to the center of the rect, stops update from moving the tower
             self.collision = False
             self.position = self.rect.center
      
@@ -340,7 +339,7 @@ class Tower(pygame.sprite.Sprite):
         # increases rect size to encompass the entire sprite
         rect = self.rect[0] - 5, self.rect[1] - 10, self.rect[2] + 10, self.rect[3] + 20
 
-        # draws the range of the tower, draw rects for bank, draw circle for other towers
+        # draws the range of the tower, draw rect for bank, draw circle for other towers
         if self.type == "bank":
             pygame.draw.rect(self.screen, color, rect, 3, 10)
             return
@@ -349,20 +348,25 @@ class Tower(pygame.sprite.Sprite):
 
     def shoot(self):
         # shoots a projectile towards the closest enemy
-        self.target = getClosestEnemy(self)
+        #different behavior for bank and barracks projectiles, since target is not an enemy
+        if self.type == "bank":
+            self.target = self
+        elif self.type == "barracks":
+            self.target = self
+        else:
+            self.target = getClosestEnemy(self)
 
-        #get the current time
+        # get the current time
         now = pygame.time.get_ticks()
 
-        #if the current time is greater or equal to the last time the tower shot + the fire rate, shoot
-        if now - self.last >= self.fireRate and self.buildmode == False and not self.target == None:
+        # if the current time is greater or equal to the last time the tower shot + the fire rate, shoot
+        if (now - self.last >= self.fireRate) and (self.buildmode == False) and not (self.target == None):
             self.last = now
             Projectile(self.screen, self.rect.center, self.target, (self.type + "Projectile"), self.damage)
         else:
             pass
 
     def killTower(self, fullRefund):
-
         # if fullRefund is true, refund the full price of the tower
         if fullRefund:
             global money
@@ -381,10 +385,18 @@ class Projectile(pygame.sprite.Sprite):
         self.target = target
         self.type = type
         self.damage = damage
+        # speed is inverse; higher speed = slower projectile
+        self.speed = 5
 
-        # get x and y coordinates of the target, added 25 to center the coordinates
-        target.x = target.rect.x + 25
-        target.y = target.rect.y + 25   
+        # get x and y coordinates of the target, added 25 to center the coordinates, only for non bank/barracks projectiles
+        if self.type != "bankProjectile" and self.type != "barracksProjectile":
+            target.x = target.rect.x + 25
+            target.y = target.rect.y + 25
+        else:
+            # sets the target above the tower
+            target.x = target.rect.x + (target.rect.width / 2) - 5
+            target.y = target.rect.y - 100
+            self.speed = 20
 
         if self.type != "sniperProjectile":
             self.imgPath = os.getcwd() + "/assets/projectiles/" + type + ".png"
@@ -392,7 +404,13 @@ class Projectile(pygame.sprite.Sprite):
             self.imgPath = self.getRandSniperProjectile()
         
         img = pygame.image.load(self.imgPath).convert_alpha()
-        img = pygame.transform.scale(img, (25, 25))
+
+        # scale the projectile differently depending on the type
+        if self.type == "bankProjectile" or self.type == "barracksProjectile":
+            img = pygame.transform.scale(img, (50, 50))
+        else:
+            img = pygame.transform.scale(img, (25, 25))
+
         self.image = img
 
         self.rect = self.image.get_rect(center=(self.position))
@@ -402,16 +420,22 @@ class Projectile(pygame.sprite.Sprite):
         groupProjectiles.add(self)
         groupSprites.add(self)
 
-        self.speed = 5
-
-    #write a function that constantly moves the projectile towards the target
+    # constantly moves the projectile towards the target
     def move(self):
 
         # if the projectile is close enough to the target, kill it
         if self.rect.x > self.target.x - 25 and self.rect.x < self.target.x + 25 and self.rect.y > self.target.y - 25 and self.rect.y < self.target.y + 25:
             self.killProjectile()
 
-            self.target.health -= self.damage
+            # adds money if the projectile is a bank projectile and reaches the target
+            if self.type == "bankProjectile":
+                global money
+                money += self.damage
+            elif self.type == "barracksProjectile":
+                pass
+            # else, damage the target
+            else:
+                self.target.health -= self.damage
 
         # move the projectile towards the target
         self.rect.x += (self.target.x - self.rect.x) / self.speed
@@ -494,7 +518,7 @@ pygame.init()
 # set a clock, used for framerate
 clock = pygame.time.Clock()
 
-# pygame Sprite group definitions
+# pygame Sprite group definitions, not all are used, but it's easier to just define them all
 groupColliders = pygame.sprite.Group()
 
 groupEnemies = pygame.sprite.Group()
@@ -525,7 +549,7 @@ def main():
     # initialize the GUI, needs to be done after the screen is created
     GUI.init()
 
-    # spawn all enemies DEBUG
+    # spawn first batch of enemies
     spawnEnemy(screen)
 
     # draw the build menu
@@ -565,7 +589,7 @@ def main():
         global money
         GUI.money(screen, money)
 
-        # DEBUGINFO
+        # DEBUGINFO FPS
         font = pygame.font.SysFont("Arial", 40)
         fps_display = font.render(str(fps), True, (255, 0, 0))
         screen.blit(fps_display, (1100, 760))
@@ -816,7 +840,7 @@ def getClosestEnemy(tower):
         # get the distance between the enemy and the tower
         distance = math.hypot(enemy.rect.x - tower.rect.x, enemy.rect.y - tower.rect.y)
 
-        # add all distances to a list, if the enemy is in range of the tower, add 20 px to compensate for the hitbox
+        # add all distances to a list if the enemy is in range of the tower, add 20 px to compensate for the hitbox
         if distance <= (tower.range + 20):
             distances.append([distance, enemy])
 
@@ -845,7 +869,6 @@ def looseState(screen):
 
     for sprite in groupSprites:
         sprite.kill()
-    #print("You loose!")
     #pygame.quit()
     #exit()
 
@@ -858,11 +881,8 @@ if __name__ == "__main__":
 #       Main menu + Tutorial
 #       Pause between waves/start wave button
 #       Tutorial
-#       Implement bank, wave/kill money
+#       Implement bank, barracks
 #       
-#   TBD:
-#   Hard to implement damage system:
-#       Barracks or different tower? (Minefield)
 #
 #   SOUND:
 #       Tower shooting
