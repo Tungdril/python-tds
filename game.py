@@ -3,9 +3,9 @@
 
 # import all the modules
 
-import GUI
+import src.GUI as GUI
+import src.readWaves as readWaves
 
-import readWaves
 import os
 import math
 import random
@@ -55,13 +55,39 @@ class PathCollider(pygame.sprite.Sprite):
     def __init__(self, screen, rect):
         pygame.sprite.Sprite.__init__(self)
 
+        self.position = (rect[0], rect[1])
+        self.size = (rect[2], rect[3])
+        self.screen = screen
+
         # neccessary for collision detection
-        self.rect = rect
+        self.rect = pygame.draw.rect(screen, (255,255,0), rect, 2)
 
-        # draws a rectangle based on the points given on the screen
-        pygame.draw.rect(screen, (255,255,0), rect, 2)
+        # creates a surface to be blitted later
+        self.surface = pygame.Surface(self.size)
+        self.surface.set_alpha(50)
 
-        self.add(groupPathColliders)
+        groupPathColliders.add(self)
+
+    def draw(self):
+        self.screen.blit(self.surface, self.position)
+
+class SpawnLocation(pygame.sprite.Sprite):
+    def __init__(self, screen, position):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.position = position
+        self.screen = screen
+
+        # creates a surface to be blitted later
+        self.surface = pygame.Surface((10, 10))
+        self.surface.fill((0, 255, 0))
+
+        self.rect = self.surface.get_rect(center=self.position)
+
+        groupSpawnLocations.add(self)
+    
+    def draw(self):
+        self.screen.blit(self.surface, self.position)
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, screen, position, type):
@@ -362,7 +388,7 @@ class Tower(pygame.sprite.Sprite):
         # if the current time is greater or equal to the last time the tower shot + the fire rate, shoot
         if (now - self.last >= self.fireRate) and (self.buildmode == False) and not (self.target == None):
             self.last = now
-            Projectile(self.screen, self.rect.center, self.target, (self.type + "Projectile"), self.damage)
+            Projectile(self.screen, self.rect.center, self.target, (self.type + "Projectile"), self.damage, self.range)
         else:
             pass
 
@@ -377,7 +403,7 @@ class Tower(pygame.sprite.Sprite):
         print("Tower", self.type, "killed")
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, screen, position, target, type, damage):
+    def __init__(self, screen, position, target, type, damage, range):
         pygame.sprite.Sprite.__init__(self)
 
         self.screen = screen
@@ -385,18 +411,26 @@ class Projectile(pygame.sprite.Sprite):
         self.target = target
         self.type = type
         self.damage = damage
+        self.range = range
         # speed is inverse; higher speed = slower projectile
         self.speed = 5
 
-        # get x and y coordinates of the target, added 25 to center the coordinates, only for non bank/barracks projectiles
-        if self.type != "bankProjectile" and self.type != "barracksProjectile":
-            target.x = target.rect.x + 25
-            target.y = target.rect.y + 25
-        else:
+        if self.type == "bankProjectile":
             # sets the target above the tower
             target.x = target.rect.x + (target.rect.width / 2) - 5
             target.y = target.rect.y - 100
             self.speed = 20
+        elif self.type == "barracksProjectile":
+            target.x, target.y = self.getClosestSpawnLocation()
+
+            if target.x == None:
+                print("No spawn locations available")
+                self.kill()
+                return
+        else:
+            # get x and y coordinates of the target, added 25 to center the coordinates, only for non bank/barracks projectiles
+            target.x = target.rect.x + 25
+            target.y = target.rect.y + 25
 
         if self.type != "sniperProjectile":
             self.imgPath = os.getcwd() + "/assets/projectiles/" + type + ".png"
@@ -456,6 +490,25 @@ class Projectile(pygame.sprite.Sprite):
             offsetPosition = position
 
         return offsetPosition
+
+    def getClosestSpawnLocation(self):
+        distances = []
+
+        for spawnPoint in groupSpawnLocations:
+            distance = math.hypot(spawnPoint.rect[0] - self.position[0], spawnPoint.rect[1] - self.position[1])
+            
+            if distance <= (self.range + 20):
+                distances.append((distance, spawnPoint))
+
+        sortedDistances = sorted(distances, key=lambda x: x[0])
+
+        if len(sortedDistances) == 0:
+            return None, None
+        elif len(sortedDistances) > 0:
+            spawnPointX = sortedDistances[0][1].rect[0]
+            spawnPointY = sortedDistances[0][1].rect[1]
+                
+            return spawnPointX, spawnPointY
 
     def getRandSniperProjectile(self):
         # get a random sniper projectile
@@ -519,8 +572,6 @@ pygame.init()
 clock = pygame.time.Clock()
 
 # pygame Sprite group definitions, not all are used, but it's easier to just define them all
-groupColliders = pygame.sprite.Group()
-
 groupEnemies = pygame.sprite.Group()
 
 groupSprites = pygame.sprite.Group()
@@ -534,6 +585,8 @@ groupMenuButtons = pygame.sprite.Group()
 groupProjectiles = pygame.sprite.Group()
 
 groupPathColliders = pygame.sprite.Group()
+
+groupSpawnLocations = pygame.sprite.Group()
 
 def main():
 
@@ -554,6 +607,12 @@ def main():
 
     # draw the build menu
     generateBuildingMenu(screen)
+
+    # draw collide rects
+    generatePathCollision(screen)
+
+    # define spawn locations for ally units
+    generateSpawnLocations(screen)
 
     # main loop
     while 1:
@@ -596,9 +655,6 @@ def main():
 
         # draw the path
         createMapPath(screen)
-
-        # draw collide rects
-        generatePathCollision(screen)
 
         #if health is less than or equal to 0, call looseState()
         if health <= 0:
@@ -652,7 +708,7 @@ def main():
                     print("Console deactivated, press C to show")
                 elif event.key == pygame.K_k:
                     #DEBUG
-                    health = 0
+                    print(len(groupPathColliders))
                 elif event.key == pygame.K_b:
                     #DEBUG: kill all enemies
                     for enemy in groupEnemies:
@@ -700,6 +756,12 @@ def main():
         for projectile in groupProjectiles:
             projectile.draw()
             projectile.move()
+
+        for collider in groupPathColliders:
+            collider.draw()
+
+        for location in groupSpawnLocations:
+            location.draw()
             
         # update the screen continuously    
         pygame.display.update()
@@ -720,12 +782,8 @@ def createMapPath(screen):
         waypointsBoss[i] = (waypointsBoss[i][0], waypointsBoss[i][1]-30)
 
     # gives a visual representation of the paths for debugging
-    mainPath = Path(screen, (255, 0, 0), points, 2)
-    bossPath = Path(screen, (0, 255, 0), waypointsBoss, 2)
-
-    # not sure if I'll even use this, but it's there
-    mainPath.add(groupColliders)
-    bossPath.add(groupColliders)
+    Path(screen, (255, 0, 0), points, 2)
+    Path(screen, (0, 255, 0), waypointsBoss, 2)
     
 def generatePathCollision(screen):
 
@@ -752,6 +810,14 @@ def generatePathCollision(screen):
     # create a collider for each colRect, add it to the collision group
     for i in range(len(colRects)):
         PathCollider(screen, colRects[i])
+
+def generateSpawnLocations(screen):
+        # defines spawn locations
+        spawnLocations = [(35, 548), (70, 546), (91, 548), (122, 549), (147, 548), (171, 549), (197, 549), (220, 549), (239, 547), (237, 521), (241, 496), (237, 469), (239, 442), (237, 414), (238, 390), (239, 367), (240, 335), (273, 333), (305, 333), (332, 333), (362, 334), (394, 334), (418, 332), (449, 332), (475, 333), (480, 362), (482, 392), (482, 411), (479, 430), (480, 457), (482, 481), (479, 508), (513, 510), (549, 510), (585, 510), (612, 507), (651, 512), (656, 476), (658, 435), (658, 406), (656, 365), (655, 324), (658, 286), (655, 243), (660, 210), (661, 179), (661, 150), (659, 119), (657, 85), (657, 60), (657, 39), (688, 38), (724, 36), (751, 38), (777, 39), (809, 39), (823, 64), (823, 95), (823, 119), (823, 139), (824, 161), (850, 159), (877, 160), (907, 160), (941, 161), (976, 162), (1005, 162), (1041, 165), (1063, 163), (1095, 163), (1125, 163), (1135, 192), (1136, 219), (1136, 247), (1135, 279), (1137, 298), (1137, 325), (1134, 349), (1105, 348), (1075, 349), (1053, 349), (1029, 349), (1005, 347), (984, 347), (962, 351), (948, 351), (949, 379), (947, 406), (949, 425), (947, 456), (947, 475), (947, 491), (946, 511), (948, 531), (988, 530), (1019, 530), (1053, 530), (1085, 531), (1117, 530), (1149, 530)] 
+    
+        # create a spawn location for each spawn location, add it to the spawn group
+        for i in range(len(spawnLocations)):
+            SpawnLocation(screen, spawnLocations[i])
 
 def generateBuildingMenu(screen):
     posX = 180
@@ -880,10 +946,8 @@ if __name__ == "__main__":
 #       Retry button
 #       Main menu + Tutorial
 #       Pause between waves/start wave button
-#       Tutorial
-#       Implement bank, barracks
+#       Implement barracks
 #       
-#
 #   SOUND:
 #       Tower shooting
 #       Enemy dying
@@ -909,7 +973,3 @@ if __name__ == "__main__":
 #       Towers
 #       Projectiles
 #       GUI
-#       Icons: Money, Health, Wave, Tower, Sell, Upgrade, Start Wave, Window favicon
-
-# Task for students:
-# have the sniper tower shoot at a random enemy instead
