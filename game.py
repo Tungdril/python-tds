@@ -349,6 +349,16 @@ class Tower(pygame.sprite.Sprite):
                 # draws a circle/rect around the tower to show the range, red if colliding with path, green if not
                 self.drawRange((255, 0, 0))
                 self.collision = True
+            elif self.type == "barracks" and not collision:
+                # checks if a spawn location is within the barracks range, if not prevents the barracks from being placed
+                noSpawn1, noSpawn2 = Projectile.getClosestSpawnLocation(self)
+
+                if noSpawn1 == None or noSpawn2 == None:
+                    self.drawRange((255, 0, 0))
+                    self.collision = True
+                else:
+                    self.drawRange((0, 255, 0))
+                    self.collision = False
             else:
                 self.drawRange((0, 255, 0))
                 self.collision = False
@@ -492,10 +502,17 @@ class Projectile(pygame.sprite.Sprite):
         return offsetPosition
 
     def getClosestSpawnLocation(self):
+        # get the closest spawn location to the barracks, same logic as getClosestEnemy()
         distances = []
 
+        # check if the tower is in buildmode
+        if hasattr(self, "buildmode"):
+            position = self.rect.center
+        else:
+            position = self.position
+
         for spawnPoint in groupSpawnLocations:
-            distance = math.hypot(spawnPoint.rect[0] - self.position[0], spawnPoint.rect[1] - self.position[1])
+            distance = math.hypot(spawnPoint.rect[0] - position[0], spawnPoint.rect[1] - position[1])
             
             if distance <= (self.range + 20):
                 distances.append((distance, spawnPoint))
