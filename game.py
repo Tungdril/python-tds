@@ -5,6 +5,7 @@
 
 import src.GUI as GUI
 import src.readWaves as readWaves
+import src.sound as sound
 
 import os
 import math
@@ -68,24 +69,6 @@ class PathCollider(pygame.sprite.Sprite):
 
         groupPathColliders.add(self)
 
-    def draw(self):
-        self.screen.blit(self.surface, self.position)
-
-class SpawnLocation(pygame.sprite.Sprite):
-    def __init__(self, screen, position):
-        pygame.sprite.Sprite.__init__(self)
-
-        self.position = position
-        self.screen = screen
-
-        # creates a surface to be blitted later
-        self.surface = pygame.Surface((10, 10))
-        self.surface.fill((0, 255, 0))
-
-        self.rect = self.surface.get_rect(center=self.position)
-
-        groupSpawnLocations.add(self)
-    
     def draw(self):
         self.screen.blit(self.surface, self.position)
 
@@ -350,17 +333,6 @@ class Tower(pygame.sprite.Sprite):
                 self.drawRange((255, 0, 0))
                 self.collision = True
             
-            # REMOVED DUE TO TIME CONSTRAINTS
-            #elif self.type == "barracks" and not collision:
-            #    # checks if a spawn location is within the barracks range, if not prevents the barracks from being placed
-            #    noSpawn1, noSpawn2 = Projectile.getClosestSpawnLocation(self)
-            #
-            #    if noSpawn1 == None or noSpawn2 == None:
-            #        self.drawRange((255, 0, 0))
-            #        self.collision = True
-            #    else:
-            #        self.drawRange((0, 255, 0))
-            #        self.collision = False
             else:
                 self.drawRange((0, 255, 0))
                 self.collision = False
@@ -389,9 +361,6 @@ class Tower(pygame.sprite.Sprite):
         #different behavior for bank and barracks projectiles, since target is not an enemy
         if self.type == "bank":
             self.target = self
-        # REMOVED DUE TO TIME CONSTRAINTS
-        #elif self.type == "barracks":
-        #    self.target = self
         else:
             self.target = getClosestEnemy(self)
 
@@ -478,7 +447,7 @@ class Projectile(pygame.sprite.Sprite):
             
             if self.type == "bankProjectile":
                 global money
-                money += self.damage 
+                money += self.damage
                 self.killProjectile()
             else:
                 self.target.health -= self.damage
@@ -503,33 +472,6 @@ class Projectile(pygame.sprite.Sprite):
             offsetPosition = position
 
         return offsetPosition
-
-    # REMOVED DUE TO TIME CONSTRAINTS
-    #def getClosestSpawnLocation(self):
-    #    # get the closest spawn location to the barracks, same logic as getClosestEnemy()
-    #    distances = []
-    #
-    #    # check if the tower is in buildmode
-    #    if hasattr(self, "buildmode"):
-    #        position = self.rect.center
-    #    else:
-    #        position = self.position
-    #
-    #    for spawnPoint in groupSpawnLocations:
-    #        distance = math.hypot(spawnPoint.rect[0] - position[0], spawnPoint.rect[1] - position[1])
-    #        
-    #        if distance <= (self.range + 20):
-    #            distances.append((distance, spawnPoint))
-    #   
-    #    sortedDistances = sorted(distances, key=lambda x: x[0])
-    #
-    #    if len(sortedDistances) == 0:
-    #        return None, None
-    #    elif len(sortedDistances) > 0:
-    #        spawnPointX = sortedDistances[0][1].rect[0]
-    #        spawnPointY = sortedDistances[0][1].rect[1]
-    #            
-    #        return spawnPointX, spawnPointY
 
     def getRandSniperProjectile(self):
         # get a random sniper projectile
@@ -607,8 +549,6 @@ groupProjectiles = pygame.sprite.Group()
 
 groupPathColliders = pygame.sprite.Group()
 
-groupSpawnLocations = pygame.sprite.Group()
-
 groupActiveAllies = pygame.sprite.Group()
 
 def main(screen):
@@ -624,9 +564,6 @@ def main(screen):
 
     # draw collide rects
     generatePathCollision(screen)
-
-    # define spawn locations for ally units
-    # generateSpawnLocations(screen)
 
     # main loop
     while 1:
@@ -704,6 +641,7 @@ def main(screen):
                     for tower in groupStaticTowers:
                         if tower.rect.collidepoint(event.pos):
                             money += int(tower.price * 0.25)
+                            sound.playSound(sound.cash)
                             tower.killTower(fullRefund=False)
                     # kill the tower if it is right clicked while being built, full refund
                     for tower in groupBuildingTowers:
@@ -744,8 +682,12 @@ def main(screen):
                 # reward player for clearing a wave
                 waveReward = 50 * currentWave
                 money += waveReward
+                sound.playSound(sound.waveend)
                 print("Wave " + str(currentWave) + " cleared, reward: " + str(waveReward))
+            
+                #wait 3 seconds before spawning new enemies
 
+                # spawn new enemies
                 spawnEnemy(screen)
 
         # draw, move all towers in buildmode continuously
@@ -773,9 +715,6 @@ def main(screen):
 
         for collider in groupPathColliders:
             collider.draw()
-
-        for location in groupSpawnLocations:
-            location.draw()
             
         # update the screen continuously    
         pygame.display.update()
@@ -825,15 +764,6 @@ def generatePathCollision(screen):
     for i in range(len(colRects)):
         PathCollider(screen, colRects[i])
 
-# REMOVED DUE TO TIME CONSTRAINTS
-#def generateSpawnLocations(screen):
-#        # defines spawn locations
-#        spawnLocations = [(35, 548), (70, 546), (91, 548), (122, 549), (147, 548), (171, 549), (197, 549), (220, 549), (239, 547), (237, 521), (241, 496), (237, 469), (239, 442), (237, 414), (238, 390), (239, 367), (240, 335), (273, 333), (305, 333), (332, 333), (362, 334), (394, 334), (418, 332), (449, 332), (475, 333), (480, 362), (482, 392), (482, 411), (479, 430), (480, 457), (482, 481), (479, 508), (513, 510), (549, 510), (585, 510), (612, 507), (651, 512), (656, 476), (658, 435), (658, 406), (656, 365), (655, 324), (658, 286), (655, 243), (660, 210), (661, 179), (661, 150), (659, 119), (657, 85), (657, 60), (657, 39), (688, 38), (724, 36), (751, 38), (777, 39), (809, 39), (823, 64), (823, 95), (823, 119), (823, 139), (824, 161), (850, 159), (877, 160), (907, 160), (941, 161), (976, 162), (1005, 162), (1041, 165), (1063, 163), (1095, 163), (1125, 163), (1135, 192), (1136, 219), (1136, 247), (1135, 279), (1137, 298), (1137, 325), (1134, 349), (1105, 348), (1075, 349), (1053, 349), (1029, 349), (1005, 347), (984, 347), (962, 351), (948, 351), (949, 379), (947, 406), (949, 425), (947, 456), (947, 475), (947, 491), (946, 511), (948, 531), (988, 530), (1019, 530), (1053, 530), (1085, 531), (1117, 530), (1149, 530)] 
-#    
-#        # create a spawn location for each spawn location, add it to the spawn group
-#        for i in range(len(spawnLocations)):
-#            SpawnLocation(screen, spawnLocations[i])
-
 def generateBuildingMenu(screen):
     posX = 180
 
@@ -878,6 +808,8 @@ def spawnEnemy(screen):
         pos = (-100-(i*150), 500)
         Enemy(screen, pos, typeBoss)
 
+    sound.playSound(sound.wavespawn)
+
 def buildTower(screen, type):
     position = pygame.mouse.get_pos()
 
@@ -888,6 +820,7 @@ def buildTower(screen, type):
     if towerPrice != None:
         global money
         money -= towerPrice
+        sound.playSound(sound.cash)
 
         Tower(screen, position, type, towerPrice)
 
@@ -989,8 +922,12 @@ def mainMenu():
     # initialize the GUI, needs to be done after the screen is created
     GUI.init()
 
-    quitButton = MainMenuButton("button_quit", (120, 300))
-    playButton = MainMenuButton("button_play", (780, 300))
+    sound.init()
+
+    sound.playMusic()
+
+    MainMenuButton("button_quit", (120, 300))
+    MainMenuButton("button_play", (780, 300))
 
     notDone = True
 
@@ -1007,16 +944,15 @@ def mainMenu():
                 if sprite.rect.collidepoint(pygame.mouse.get_pos()):
                     if sprite.buttonPressed():
                         notDone = False
+                        sound.stopMusic()
                         main(screen)
         
         groupMainMenuButtons.draw(screen)
 
         pygame.display.update()
-
     
 if __name__ == "__main__":
     mainMenu()
-    #main()
 
 #   GUI/GAMEPLAY:
 #       Retry button
@@ -1033,4 +969,3 @@ if __name__ == "__main__":
 #       Background music
 #       Wave start
 #       Wave end
-#
