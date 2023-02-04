@@ -300,9 +300,9 @@ class Tower(pygame.sprite.Sprite):
         print("Flamer tower spawned")
 
     def spawnBarracksTower(self):
-        self.damage = 0
+        self.damage = 10
         self.range = 100
-        self.fireRate = 1000
+        self.fireRate = 2500
 
         self.image = pygame.transform.scale(self.image, (100, 70))
 
@@ -349,16 +349,18 @@ class Tower(pygame.sprite.Sprite):
                 # draws a circle/rect around the tower to show the range, red if colliding with path, green if not
                 self.drawRange((255, 0, 0))
                 self.collision = True
-            elif self.type == "barracks" and not collision:
-                # checks if a spawn location is within the barracks range, if not prevents the barracks from being placed
-                noSpawn1, noSpawn2 = Projectile.getClosestSpawnLocation(self)
-
-                if noSpawn1 == None or noSpawn2 == None:
-                    self.drawRange((255, 0, 0))
-                    self.collision = True
-                else:
-                    self.drawRange((0, 255, 0))
-                    self.collision = False
+            
+            # REMOVED DUE TO TIME CONSTRAINTS
+            #elif self.type == "barracks" and not collision:
+            #    # checks if a spawn location is within the barracks range, if not prevents the barracks from being placed
+            #    noSpawn1, noSpawn2 = Projectile.getClosestSpawnLocation(self)
+            #
+            #    if noSpawn1 == None or noSpawn2 == None:
+            #        self.drawRange((255, 0, 0))
+            #        self.collision = True
+            #    else:
+            #        self.drawRange((0, 255, 0))
+            #        self.collision = False
             else:
                 self.drawRange((0, 255, 0))
                 self.collision = False
@@ -387,8 +389,9 @@ class Tower(pygame.sprite.Sprite):
         #different behavior for bank and barracks projectiles, since target is not an enemy
         if self.type == "bank":
             self.target = self
-        elif self.type == "barracks":
-            self.target = self
+        # REMOVED DUE TO TIME CONSTRAINTS
+        #elif self.type == "barracks":
+        #    self.target = self
         else:
             self.target = getClosestEnemy(self)
 
@@ -431,17 +434,15 @@ class Projectile(pygame.sprite.Sprite):
             target.y = target.rect.y - 100
             self.speed = 20
         elif self.type == "barracksProjectile":
-            target.x, target.y = self.getClosestSpawnLocation()
-
-            if target.x == None:
-                print("No spawn locations available")
-                self.kill()
-                return
+            target.x = target.rect.x + 25
+            target.y = target.rect.y + 25
+            self.speed = 10
         else:
             # get x and y coordinates of the target, added 25 to center the coordinates, only for non bank/barracks projectiles
             target.x = target.rect.x + 25
             target.y = target.rect.y + 25
 
+        # get random sniper projectiles
         if self.type != "sniperProjectile":
             self.imgPath = os.getcwd() + "/assets/projectiles/" + type + ".png"
         else:
@@ -467,19 +468,21 @@ class Projectile(pygame.sprite.Sprite):
     # constantly moves the projectile towards the target
     def move(self):
 
-        # if the projectile is close enough to the target, kill it
-        if self.rect.x > self.target.x - 25 and self.rect.x < self.target.x + 25 and self.rect.y > self.target.y - 25 and self.rect.y < self.target.y + 25:
-            self.killProjectile()
+        if self.type == "barracksProjectile":
+            hitboxOffset = 10
+        else:
+            hitboxOffset = 25
 
-            # adds money if the projectile is a bank projectile and reaches the target
+        # if the projectile is close enough to the target, kill it
+        if self.rect.x > self.target.x - hitboxOffset and self.rect.x < self.target.x + hitboxOffset and self.rect.y > self.target.y - hitboxOffset and self.rect.y < self.target.y + hitboxOffset:
+            
             if self.type == "bankProjectile":
                 global money
-                money += self.damage
-            elif self.type == "barracksProjectile":
-                pass
-            # else, damage the target
+                money += self.damage 
+                self.killProjectile()
             else:
                 self.target.health -= self.damage
+                self.killProjectile()
 
         # move the projectile towards the target
         self.rect.x += (self.target.x - self.rect.x) / self.speed
@@ -487,7 +490,7 @@ class Projectile(pygame.sprite.Sprite):
 
     def draw(self):
         self.screen.blit(self.image, self.rect)
-
+            
     def getProjectileOffset(self, position, type):
         # get the offset position of the projectile, so it spawns at the correct position
         if type == "mgProjectile":
@@ -501,31 +504,32 @@ class Projectile(pygame.sprite.Sprite):
 
         return offsetPosition
 
-    def getClosestSpawnLocation(self):
-        # get the closest spawn location to the barracks, same logic as getClosestEnemy()
-        distances = []
-
-        # check if the tower is in buildmode
-        if hasattr(self, "buildmode"):
-            position = self.rect.center
-        else:
-            position = self.position
-
-        for spawnPoint in groupSpawnLocations:
-            distance = math.hypot(spawnPoint.rect[0] - position[0], spawnPoint.rect[1] - position[1])
-            
-            if distance <= (self.range + 20):
-                distances.append((distance, spawnPoint))
-
-        sortedDistances = sorted(distances, key=lambda x: x[0])
-
-        if len(sortedDistances) == 0:
-            return None, None
-        elif len(sortedDistances) > 0:
-            spawnPointX = sortedDistances[0][1].rect[0]
-            spawnPointY = sortedDistances[0][1].rect[1]
-                
-            return spawnPointX, spawnPointY
+    # REMOVED DUE TO TIME CONSTRAINTS
+    #def getClosestSpawnLocation(self):
+    #    # get the closest spawn location to the barracks, same logic as getClosestEnemy()
+    #    distances = []
+    #
+    #    # check if the tower is in buildmode
+    #    if hasattr(self, "buildmode"):
+    #        position = self.rect.center
+    #    else:
+    #        position = self.position
+    #
+    #    for spawnPoint in groupSpawnLocations:
+    #        distance = math.hypot(spawnPoint.rect[0] - position[0], spawnPoint.rect[1] - position[1])
+    #        
+    #        if distance <= (self.range + 20):
+    #            distances.append((distance, spawnPoint))
+    #   
+    #    sortedDistances = sorted(distances, key=lambda x: x[0])
+    #
+    #    if len(sortedDistances) == 0:
+    #        return None, None
+    #    elif len(sortedDistances) > 0:
+    #        spawnPointX = sortedDistances[0][1].rect[0]
+    #        spawnPointY = sortedDistances[0][1].rect[1]
+    #            
+    #        return spawnPointX, spawnPointY
 
     def getRandSniperProjectile(self):
         # get a random sniper projectile
@@ -604,6 +608,8 @@ groupProjectiles = pygame.sprite.Group()
 groupPathColliders = pygame.sprite.Group()
 
 groupSpawnLocations = pygame.sprite.Group()
+
+groupActiveAllies = pygame.sprite.Group()
 
 def main():
 
