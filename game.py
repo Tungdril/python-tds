@@ -6,6 +6,7 @@ import src.sound as sound
 import os
 import math
 import random
+import sys
 
 try:
     import pygame # check if pygame is installed, import if it is
@@ -615,6 +616,7 @@ def main(screen):
             # exit if the user clicks the close button
             if event.type == pygame.QUIT: # if the user clicks the close button, exit
                 pygame.quit()
+                sys.exit()
             # DEEBUG: kills enemy/tower if it is clicked 1: LMB, 2: MMB, 3: RMB; 4: ScrUP, 5: ScrDOWN
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # if left mouse button is clicked
@@ -881,9 +883,11 @@ def winState(screen):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
+            sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
+                sys.exit()
         elif event.key == pygame.K_RETURN:
           mainMenu()
 
@@ -896,9 +900,11 @@ def looseState(screen):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
+            sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
+                sys.exit()
             elif event.key == pygame.K_RETURN:
                 mainMenu()
 
@@ -932,8 +938,8 @@ def mainMenu():
             if self.type == "button_play":
                 return True
             elif self.type == "button_quit":
-                print("Quit")
                 pygame.quit()
+                sys.exit()
 
         def draw(self):
             screen.blit(self.image, (self.rect.x, self.rect.y))
@@ -963,6 +969,7 @@ def mainMenu():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                sys.exit()
         if pygame.mouse.get_pressed()[0]:
             for sprite in groupMainMenuButtons:
                 if sprite.rect.collidepoint(pygame.mouse.get_pos()):
