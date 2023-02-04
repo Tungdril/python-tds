@@ -906,10 +906,10 @@ def looseState(screen):
 def mainMenu():
     # reset main values
     global currentWave
-    currentWave = 10
+    currentWave = 1
 
     global money
-    money = 5000
+    money = 500
 
     global health
     health = 100
