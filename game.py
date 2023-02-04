@@ -30,14 +30,6 @@ except ImportError:
             import pygame
 
 # ---------------------------------------------------------------------------------------------------- # 
-global currentWave
-currentWave = 1
-
-global health
-health = 100
-
-global money
-money = 500
 
 # class definitions
 class Path(pygame.sprite.Sprite):
@@ -284,7 +276,7 @@ class Tower(pygame.sprite.Sprite):
     def spawnBarracksTower(self):
         self.damage = 10
         self.range = 100
-        self.fireRate = 2500
+        self.fireRate = 3000
 
         self.image = pygame.transform.scale(self.image, (100, 70))
 
@@ -609,7 +601,24 @@ def main(screen):
         #if health is less than or equal to 0, call looseState()
         if health <= 0:
             sound.stopMusic()
-            looseState(screen)  
+            looseState(screen)
+
+        # check if all enemies are dead, if so, spawn new wave, only if health is above 0
+        if len(groupEnemies) == 0 and health > 0:
+            # check if all waves are done, if so, go to win state
+            if currentWave > 9:
+                sound.stopMusic()
+                winState(screen)
+            elif health > 0:
+                currentWave += 1
+
+                # reward player for clearing a wave
+                waveReward = 50 * currentWave
+                money += waveReward
+                print("Wave " + str(currentWave) + " cleared, reward: " + str(waveReward))
+                
+                # spawn new enemies
+                spawnEnemy(screen)  
             
         for event in pygame.event.get():
 
@@ -675,22 +684,6 @@ def main(screen):
             # print all events if flag is set
             if consoleActive:
                 print(event)
-
-        # check if all enemies are dead, if so, spawn new wave, only if health is above 0
-        if len(groupEnemies) == 0 and health > 0:
-            # check if all waves are done, if so, go to win state
-            if currentWave > 9:
-                winState(screen)
-            elif health > 0:
-                currentWave += 1
-
-                # reward player for clearing a wave
-                waveReward = 50 * currentWave
-                money += waveReward
-                print("Wave " + str(currentWave) + " cleared, reward: " + str(waveReward))
-                
-                # spawn new enemies
-                spawnEnemy(screen)
 
         # draw, move all towers in buildmode continuously
         for tower in groupBuildingTowers:
@@ -874,13 +867,13 @@ def getClosestEnemy(tower):
         return sortedDistances[0][1]
     
 def winState(screen):
-    sound.stopMusic()
     GUI.win(screen)
 
     for sprite in groupSprites:
         sprite.kill()
 
     for event in pygame.event.get():
+        print(event)
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
@@ -888,8 +881,9 @@ def winState(screen):
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-        elif event.key == pygame.K_RETURN:
-          mainMenu()
+            elif event.key == pygame.K_RETURN:
+                print("Restarting game...")
+                mainMenu()
 
 def looseState(screen):
     GUI.gameOver(screen)
@@ -898,6 +892,7 @@ def looseState(screen):
         sprite.kill()
     
     for event in pygame.event.get():
+        print(event)
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
@@ -909,13 +904,12 @@ def looseState(screen):
                 mainMenu()
 
 def mainMenu():
-
     # reset main values
     global currentWave
-    currentWave = 1
+    currentWave = 10
 
     global money
-    money = 500
+    money = 5000
 
     global health
     health = 100

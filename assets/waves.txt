@@ -3,9 +3,9 @@
 5;light;0;heavy;2;fast;0;boss
 10;light;1;heavy;2;fast;0;boss
 10;light;3;heavy;2;fast;0;boss
-5;light;1;heavy;5;fast;0;boss
-15;light;5;heavy;0;fast;0;boss
-10;light;0;heavy;10;fast;0;boss
-20;light;5;heavy;2;fast;0;boss
+5;light;5;heavy;5;fast;0;boss
+15;light;5;heavy;5;fast;0;boss
+10;light;0;heavy;15;fast;0;boss
+20;light;5;heavy;5;fast;0;boss
 20;light;10;heavy;10;fast;0;boss
-25;light;5;heavy;5;fast;1;boss
+25;light;10;heavy;10;fast;1;boss
