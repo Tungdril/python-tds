@@ -1,8 +1,4 @@
-# https://www.pygame.org/docs/
-# https://pygame.readthedocs.io/en/latest/index.html
-
 # import all the modules
-
 import src.GUI as GUI
 import src.readWaves as readWaves
 import src.sound as sound
@@ -32,16 +28,15 @@ except ImportError:
             print("Pygame installed")
             import pygame
 
-# ---------------------------------------------------------------------------------------------------- #    
-
-# print pygame version
-# print(pygame.version.ver)
-
+# ---------------------------------------------------------------------------------------------------- # 
+global currentWave
 currentWave = 1
 
+global health
 health = 100
 
-money = 10000
+global money
+money = 500
 
 # class definitions
 class Path(pygame.sprite.Sprite):
@@ -49,8 +44,8 @@ class Path(pygame.sprite.Sprite):
         # calls constructor of parent class
         pygame.sprite.Sprite.__init__(self)
 
-        # draws a polygon based on the points given on the screen
-        pygame.draw.polygon(screen, color, points, width)
+        #DEBUG: draws a polygon based on the points given on the screen
+        #pygame.draw.polygon(screen, color, points, width)
 
 class PathCollider(pygame.sprite.Sprite):
     def __init__(self, screen, rect):
@@ -68,6 +63,7 @@ class PathCollider(pygame.sprite.Sprite):
         self.surface.set_alpha(50)
 
         groupPathColliders.add(self)
+        groupSprites.add(self)
 
     def draw(self):
         self.screen.blit(self.surface, self.position)
@@ -132,7 +128,7 @@ class Enemy(pygame.sprite.Sprite):
         print("Heavy enemy spawned")
 
     def spawnFastEnemy(self):  
-        self.health = 50
+        self.health = 35
         self.maxHealth = self.health
         self.speed = 5
         self.damage = 2
@@ -144,7 +140,7 @@ class Enemy(pygame.sprite.Sprite):
         print("Fast enemy spawned")
 
     def spawnBossEnemy(self):
-        self.health = 500
+        self.health = 800
         self.maxHealth = self.health
         self.speed = 1
         self.damage = 100
@@ -190,6 +186,7 @@ class Enemy(pygame.sprite.Sprite):
         # removes the enemy from all groups, preventing it from being drawn
         self.kill()
         print("Enemy", self.type, "killed")
+        sound.playSound(sound.enemydeath)
 
     def move(self):
         # moves the enemy along a predefined path
@@ -219,7 +216,8 @@ class Enemy(pygame.sprite.Sprite):
 
                 #if enemy reaches final waypoint, subtract damage from health
                 global health
-                health -= self.damage      
+                health -= self.damage
+                sound.playSound(sound.damage)
                 
                 #remove enemy object
                 self.killEnemy()
@@ -600,17 +598,18 @@ def main(screen):
         GUI.money(screen, money)
 
         # DEBUGINFO FPS
-        font = pygame.font.SysFont("Arial", 40)
-        fps_display = font.render(str(fps), True, (255, 0, 0))
-        screen.blit(fps_display, (1100, 760))
+        #font = pygame.font.SysFont("Arial", 40)
+        #fps_display = font.render(str(fps), True, (255, 0, 0))
+        #screen.blit(fps_display, (1100, 760))
 
         # draw the path
         createMapPath(screen)
 
         #if health is less than or equal to 0, call looseState()
         if health <= 0:
+            sound.stopMusic()
             looseState(screen)  
-
+            
         for event in pygame.event.get():
 
             # exit if the user clicks the close button
@@ -620,17 +619,22 @@ def main(screen):
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # if left mouse button is clicked
                 if event.button == 1:
-                    for enemy in groupEnemies:
-                        if enemy.rect.collidepoint(event.pos):
-                            enemy.killEnemy()
+                    #DEBUG
+                    #for enemy in groupEnemies:
+                    #    if enemy.rect.collidepoint(event.pos):
+                    #        enemy.killEnemy()
                     for tower in groupBuildingTowers:
                         if tower.rect.collidepoint(event.pos):
                             #set buildmode to false, so the tower stays in place
                             if not tower.collision:
                                 tower.buildmode = False
+                                sound.playSound(sound.towerplaceing)
+
                                 #remove the tower from the building group and add it to the static group
                                 groupBuildingTowers.remove(tower)
                                 groupStaticTowers.add(tower)
+                            else:
+                                sound.playSound(sound.error)
                     for button in groupMenuButtons:
                             if button.rect.collidepoint(event.pos):
                                 button.buttonPressed()
@@ -647,6 +651,7 @@ def main(screen):
                     for tower in groupBuildingTowers:
                         if tower.rect.collidepoint(event.pos):
                             tower.killTower(fullRefund=True)
+                            sound.playSound(sound.cash)
 
             # check if a key has been pressed
             if event.type == pygame.KEYDOWN:
@@ -658,14 +663,12 @@ def main(screen):
                 elif event.key == pygame.K_x:
                     consoleActive = False
                     print("Console deactivated, press C to show")
-                elif event.key == pygame.K_k:
-                    #DEBUG
-                    print(len(groupPathColliders))
-                elif event.key == pygame.K_b:
-                    #DEBUG: kill all enemies
-                    for enemy in groupEnemies:
-                        enemy.killEnemy()
-                    pass
+                #DEBUG
+                #elif event.key == pygame.K_k:
+                #    health = 0
+                #elif event.key == pygame.K_b:
+                #    for enemy in groupEnemies:
+                #        enemy.killEnemy()
 
             # print all events if flag is set
             if consoleActive:
@@ -682,11 +685,8 @@ def main(screen):
                 # reward player for clearing a wave
                 waveReward = 50 * currentWave
                 money += waveReward
-                sound.playSound(sound.waveend)
                 print("Wave " + str(currentWave) + " cleared, reward: " + str(waveReward))
-            
-                #wait 3 seconds before spawning new enemies
-
+                
                 # spawn new enemies
                 spawnEnemy(screen)
 
@@ -713,8 +713,9 @@ def main(screen):
             projectile.draw()
             projectile.move()
 
-        for collider in groupPathColliders:
-            collider.draw()
+        #DEBUG
+        #for collider in groupPathColliders:
+        #    collider.draw()
             
         # update the screen continuously    
         pygame.display.update()
@@ -775,7 +776,6 @@ def generateBuildingMenu(screen):
     MenuButton(screen, "buttonBank", (posX*5, 685))
 
 def spawnEnemy(screen):
-
     # pass the current wave to the readWaves function, returns a list of enemies to be spawned
     toBeSpawned = readWaves.read(currentWave)
     print(toBeSpawned)
@@ -843,6 +843,7 @@ def checkPrice(type):
         return towerPrice
     else:
         print("Not enough money!")
+        sound.playSound(sound.error)
         towerPrice = None
         return towerPrice
 
@@ -871,22 +872,51 @@ def getClosestEnemy(tower):
         return sortedDistances[0][1]
     
 def winState(screen):
+    sound.stopMusic()
     GUI.win(screen)
 
     for sprite in groupSprites:
         sprite.kill()
-    #pygame.quit()
-    #exit()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                exit()
+        elif event.key == pygame.K_RETURN:
+          mainMenu()
 
 def looseState(screen):
     GUI.gameOver(screen)
 
     for sprite in groupSprites:
         sprite.kill()
-    #pygame.quit()
-    #exit()
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                exit()
+            elif event.key == pygame.K_RETURN:
+                mainMenu()
 
 def mainMenu():
+
+    # reset main values
+    global currentWave
+    currentWave = 1
+
+    global money
+    money = 500
+
+    global health
+    health = 100
 
     groupMainMenuButtons = pygame.sprite.Group()
 
@@ -944,7 +974,6 @@ def mainMenu():
                 if sprite.rect.collidepoint(pygame.mouse.get_pos()):
                     if sprite.buttonPressed():
                         notDone = False
-                        sound.stopMusic()
                         main(screen)
         
         groupMainMenuButtons.draw(screen)
@@ -953,19 +982,3 @@ def mainMenu():
     
 if __name__ == "__main__":
     mainMenu()
-
-#   GUI/GAMEPLAY:
-#       Retry button
-#       Main menu
-#       
-#   SOUND:
-#       Tower shooting
-#       Enemy dying
-#       Enemy spawning
-#       Tower building
-#       Tower upgrading
-#       Tower selling
-#       Game over
-#       Background music
-#       Wave start
-#       Wave end

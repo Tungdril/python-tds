@@ -9,6 +9,7 @@ def init():
     pygame.mixer.pre_init(44100, 16, 2, 4096)
 
     pygame.mixer.music.load(path + "/assets/sound/backgroundmusic.wav")
+    pygame.mixer.music.set_volume(0.6)
     pygame.mixer.music.play(-1)
 
     global cash
@@ -31,12 +32,6 @@ def init():
 
     global towerplaceing
     towerplaceing = pygame.mixer.Sound(path + "/assets/sound/towerplaceing.wav")
-
-    global towershot
-    towershot = pygame.mixer.Sound(path + "/assets/sound/towershot.wav")
-
-    global waveend
-    waveend = pygame.mixer.Sound(path + "/assets/sound/waveend.wav")
 
     global wavespawn
     wavespawn = pygame.mixer.Sound(path + "/assets/sound/wavespawn.wav")
