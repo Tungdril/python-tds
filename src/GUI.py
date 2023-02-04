@@ -37,10 +37,17 @@ def init():
     img_mouse_left = pygame.image.load(path + "/assets/mouse_left.png").convert_alpha()
     img_mouse_left = pygame.transform.scale(img_mouse_left, (20, 30))
 
+    global img_main_menu
+    img_main_menu = pygame.image.load(path + "/assets/main_menu.png").convert()
+    img_main_menu = pygame.transform.scale(img_main_menu, (1200, 800))
+
 print("Assets loaded")
 
 def background(screen):
     screen.blit(img_background, (0, 0))
+
+def mainMenu(screen):
+    screen.blit(img_main_menu, (0, 0))
 
 def wave(screen, wave):
     text = font.render("       " + str(wave) + "/10", True, (0,0,0))

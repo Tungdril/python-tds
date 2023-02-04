@@ -611,19 +611,10 @@ groupSpawnLocations = pygame.sprite.Group()
 
 groupActiveAllies = pygame.sprite.Group()
 
-def main():
+def main(screen):
 
     # deactivates console by default
     consoleActive = False
-
-    pygame.display.set_caption("Novus Ordo Seclorum") # set the window title
-    screen = pygame.display.set_mode((1200, 800)) # create a window 
-
-    icon = pygame.image.load(os.getcwd() + "/assets/icon.png")
-    pygame.display.set_icon(icon)
-
-    # initialize the GUI, needs to be done after the screen is created
-    GUI.init()
 
     # spawn first batch of enemies
     spawnEnemy(screen)
@@ -635,7 +626,7 @@ def main():
     generatePathCollision(screen)
 
     # define spawn locations for ally units
-    generateSpawnLocations(screen)
+    # generateSpawnLocations(screen)
 
     # main loop
     while 1:
@@ -834,13 +825,14 @@ def generatePathCollision(screen):
     for i in range(len(colRects)):
         PathCollider(screen, colRects[i])
 
-def generateSpawnLocations(screen):
-        # defines spawn locations
-        spawnLocations = [(35, 548), (70, 546), (91, 548), (122, 549), (147, 548), (171, 549), (197, 549), (220, 549), (239, 547), (237, 521), (241, 496), (237, 469), (239, 442), (237, 414), (238, 390), (239, 367), (240, 335), (273, 333), (305, 333), (332, 333), (362, 334), (394, 334), (418, 332), (449, 332), (475, 333), (480, 362), (482, 392), (482, 411), (479, 430), (480, 457), (482, 481), (479, 508), (513, 510), (549, 510), (585, 510), (612, 507), (651, 512), (656, 476), (658, 435), (658, 406), (656, 365), (655, 324), (658, 286), (655, 243), (660, 210), (661, 179), (661, 150), (659, 119), (657, 85), (657, 60), (657, 39), (688, 38), (724, 36), (751, 38), (777, 39), (809, 39), (823, 64), (823, 95), (823, 119), (823, 139), (824, 161), (850, 159), (877, 160), (907, 160), (941, 161), (976, 162), (1005, 162), (1041, 165), (1063, 163), (1095, 163), (1125, 163), (1135, 192), (1136, 219), (1136, 247), (1135, 279), (1137, 298), (1137, 325), (1134, 349), (1105, 348), (1075, 349), (1053, 349), (1029, 349), (1005, 347), (984, 347), (962, 351), (948, 351), (949, 379), (947, 406), (949, 425), (947, 456), (947, 475), (947, 491), (946, 511), (948, 531), (988, 530), (1019, 530), (1053, 530), (1085, 531), (1117, 530), (1149, 530)] 
-    
-        # create a spawn location for each spawn location, add it to the spawn group
-        for i in range(len(spawnLocations)):
-            SpawnLocation(screen, spawnLocations[i])
+# REMOVED DUE TO TIME CONSTRAINTS
+#def generateSpawnLocations(screen):
+#        # defines spawn locations
+#        spawnLocations = [(35, 548), (70, 546), (91, 548), (122, 549), (147, 548), (171, 549), (197, 549), (220, 549), (239, 547), (237, 521), (241, 496), (237, 469), (239, 442), (237, 414), (238, 390), (239, 367), (240, 335), (273, 333), (305, 333), (332, 333), (362, 334), (394, 334), (418, 332), (449, 332), (475, 333), (480, 362), (482, 392), (482, 411), (479, 430), (480, 457), (482, 481), (479, 508), (513, 510), (549, 510), (585, 510), (612, 507), (651, 512), (656, 476), (658, 435), (658, 406), (656, 365), (655, 324), (658, 286), (655, 243), (660, 210), (661, 179), (661, 150), (659, 119), (657, 85), (657, 60), (657, 39), (688, 38), (724, 36), (751, 38), (777, 39), (809, 39), (823, 64), (823, 95), (823, 119), (823, 139), (824, 161), (850, 159), (877, 160), (907, 160), (941, 161), (976, 162), (1005, 162), (1041, 165), (1063, 163), (1095, 163), (1125, 163), (1135, 192), (1136, 219), (1136, 247), (1135, 279), (1137, 298), (1137, 325), (1134, 349), (1105, 348), (1075, 349), (1053, 349), (1029, 349), (1005, 347), (984, 347), (962, 351), (948, 351), (949, 379), (947, 406), (949, 425), (947, 456), (947, 475), (947, 491), (946, 511), (948, 531), (988, 530), (1019, 530), (1053, 530), (1085, 531), (1117, 530), (1149, 530)] 
+#    
+#        # create a spawn location for each spawn location, add it to the spawn group
+#        for i in range(len(spawnLocations)):
+#            SpawnLocation(screen, spawnLocations[i])
 
 def generateBuildingMenu(screen):
     posX = 180
@@ -961,15 +953,74 @@ def looseState(screen):
     #pygame.quit()
     #exit()
 
+def mainMenu():
+
+    groupMainMenuButtons = pygame.sprite.Group()
+
+    class MainMenuButton(pygame.sprite.Sprite):
+        def __init__(self, type, position):
+            super().__init__()
+            self.image = pygame.image.load(os.getcwd() + "/assets/buttons/" + type + ".png")
+            self.image = pygame.transform.scale(self.image, (280, 100))
+            self.rect = self.image.get_rect()
+            self.rect.x = position[0]
+            self.rect.y = position[1]
+            self.type = type
+
+            groupMainMenuButtons.add(self)
+
+        def buttonPressed(self):
+            if self.type == "button_play":
+                return True
+            elif self.type == "button_quit":
+                print("Quit")
+                pygame.quit()
+                exit()
+
+        def draw(self):
+            screen.blit(self.image, (self.rect.x, self.rect.y))
+
+    pygame.display.set_caption("Novus Ordo Seclorum") # set the window title
+    screen = pygame.display.set_mode((1200, 800)) # create a window 
+
+    icon = pygame.image.load(os.getcwd() + "/assets/icon.png")
+    pygame.display.set_icon(icon)
+
+    # initialize the GUI, needs to be done after the screen is created
+    GUI.init()
+
+    quitButton = MainMenuButton("button_quit", (120, 300))
+    playButton = MainMenuButton("button_play", (780, 300))
+
+    notDone = True
+
+    while notDone:
+
+        GUI.mainMenu(screen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        if pygame.mouse.get_pressed()[0]:
+            for sprite in groupMainMenuButtons:
+                if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                    if sprite.buttonPressed():
+                        notDone = False
+                        main(screen)
+        
+        groupMainMenuButtons.draw(screen)
+
+        pygame.display.update()
+
     
 if __name__ == "__main__":
-    main()
+    mainMenu()
+    #main()
 
 #   GUI/GAMEPLAY:
 #       Retry button
-#       Main menu + Tutorial
-#       Pause between waves/start wave button
-#       Implement barracks
+#       Main menu
 #       
 #   SOUND:
 #       Tower shooting
@@ -983,16 +1034,3 @@ if __name__ == "__main__":
 #       Wave start
 #       Wave end
 #
-#   PARTICLES:
-#       Tower shooting
-#       Enemy dying
-#       Enemy spawning
-#       Tower building
-#       Tower upgrading
-#       Tower selling
-#       Projectile hitting enemy
-#
-#   GRAPHICS:
-#       Towers
-#       Projectiles
-#       GUI
